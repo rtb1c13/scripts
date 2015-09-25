@@ -1,11 +1,60 @@
 #!/usr/bin/env python
 
+# Author Richard Bradshaw, R.T.Bradshaw@soton.ac.uk
 # Script to calculate the Amoeba-based electric field at a desired site
-# Requirements: MDTraj, numpy
+# Requirements: MDTraj, numpy, Tinker analyze
+
+#Usage: xxxxxxxxxxxxx
+
 
 import mdtraj as md
 import numpy as np
+import sys,argparse
 from subprocess import call
+
+
+#Argparser
+def parse():
+   parser = argparse.ArgumentParser()
+   parser.add_argument("-a","--atoms",help="Atom numbers for analysis (Max 4)",nargs='+',type=int)
+   parser.add_argument("-ga","--gasatoms",help="Atom numbers for analysis (Max 4)",nargs='+',type=int)
+   parser.add_argument("-d","--dummy",help="Calculates fields by inserting a dummy atom instead of using existing atom. Use with caution!",action="store_true")
+   parser.add_argument("-p","--polarise",help="Polarisabilities for atoms 1 & 2. Defaults to carbonyl C and O.",nargs=2,type=float,default=['1.3340','0.8370'])
+   parser.add_argument("-st","--solvtraj",help="Solvated trajectory file (Tinker arc, NO BOX INFO DUE TO BUG IN MDTRAJ)",type=str)
+   parser.add_argument("-gt","--gastraj",help="Gas phase trajectory file (Tinker arc, NO BOX INFO DUE TO BUG IN MDTRAJ)",type=str)
+   parser.add_argument("-sp","--solvprefix",help="Prefix for solvated coordinate files (Tinker xyz, with box info)",type=str)
+   parser.add_argument("-gp","--gasprefix",help="Prefix for gas-phase coordinate files (Tinker xyz, no box info)",type=str)
+
+   if len(sys.argv)==1:
+      parser.print_help()
+      sys.exit(1)
+
+   args = parser.parse_args()
+   return args
+
+#Class for atoms
+class Atom:
+   """Class to define properties for atom numbers
+      read in from command line arguments"""
+
+   def __init__(self,num):
+      """Defines index for atom num"""
+      self.idx = num-1
+
+   def polarise(self,num):
+      """Defines polarisability for atom num"""
+      listidx = args.atoms.index(num)
+      if listidx > 1:
+         return
+      else:
+         self.alpha = args.polarise[listidx]
+   def polarisegas(self,num):
+      """Defines polarisability for atom num"""
+      listidx = args.gasatoms.index(num)
+      if listidx > 1:
+         return
+      else:
+         self.alpha = args.polarise[listidx]
 
 # Class for trajectory
 class Anal_traj:
@@ -50,13 +99,21 @@ class Anal_traj:
          self.leng[i] = np.linalg.norm(self.vec[i])
          self.unitvec[i] = self.vec[i] / self.leng[i]
 
-   def cross(self,atm1,atm2,atm3):
+   def cross(self,atmlst):
       """Defines the vector cross product, length and
          unit vector along that path for atom indices
          atm1, atm2, atm3, centred at atm1.Returns three arrays:
           1) X/Y/Z vector components
           2) Interatomic vector length
           3) X/Y/Z unit vector components."""
+      if len(atmlst) > 3:
+         atm1 = atmlst[0].idx
+         atm2 = atmlst[2].idx
+         atm3 = atmlst[3].idx
+      else:
+         atm1 = atmlst[0].idx
+         atm2 = atmlst[1].idx
+         atm3 = atmlst[2].idx
       self.coords1 = np.zeros((self.traj.n_frames,3))
       self.coords2 = np.zeros((self.traj.n_frames,3))
       self.coords3 = np.zeros((self.traj.n_frames,3))
@@ -141,11 +198,15 @@ def analyze_dipl(prefix,trajobj):
 
 # This one makes use of existing atoms - no dummy atms. Takes longer as prints all interactions.
 # Can change analyze.f to improve this!
-def analyze_dipl_detailed(prefix,trajobj,atm1,atm2):
+def analyze_dipl_detailed(prefix,trajobj,atmlst):
    """Assigns induced dipole components for defined atoms
       using analyze. Note that the keyfile
       'test.key' must be prepared elsewhere, and should
       print out dipoles to 6dp."""
+   atm1=atmlst[0].idx
+   atm2=atmlst[1].idx
+   alpha1=atmlst[0].alpha
+   alpha2=atmlst[1].alpha
    # 3d array for field
    field = np.zeros((2,trajobj.traj.n_frames,3))
    for i in range(0,trajobj.traj.n_frames):
@@ -159,8 +220,8 @@ def analyze_dipl_detailed(prefix,trajobj,atm1,atm2):
       field[1][i][0] = dipls[atm2][0]
       field[1][i][1] = dipls[atm2][1]
       field[1][i][2] = dipls[atm2][2]
-   field[0] = field[0] / 1.3340 #Glycine C
-   field[1] = field[1] / 1.0730 #Proline N
+   field[0] = field[0] / alpha1 
+   field[1] = field[1] / alpha2 
    return field
 
 
@@ -188,23 +249,34 @@ def writefield_cross(fn,trajobj,field):
    outfile.close()
 
 ### MAIN BELOW HERE ###
-
+#def main()
 
 # Read in tinker archive. INSERT FILENAME HERE.
 # Currently needs to be an archive without box dims (due to bug)
-arcname = "Run1_stripped.arc"
-arcname_gas = "Run1_peptonly.arc"
+args = parse()
+arcname = args.solvtraj
+arcname_gas = args.gastraj
+atmlst=[]
+for i in args.atoms:
+   j = Atom(i)
+   j.polarise(i)
+   atmlst.append(j)
+gatmlst=[]
+for i in args.gasatoms:
+   j = Atom(i)
+   j.polarisegas(i)
+   gatmlst.append(j)
 
 # Indices of atoms we want to measure the field between, and calculate z axis with
-atm1 = 2506 # Proline N
-atm2 = 2507 # Proline CA
-atm3 = 2513 # Proline CD
-atm4 = 2501 # Glycine C
+#atm1 = 2506 # Proline N
+#atm2 = 2507 # Proline CA
+#atm3 = 2513 # Proline CD
+#atm4 = 2501 # Glycine C
 
-atm5 = 36 # Pro N
-atm6 = 37 # Pro CA
-atm7 = 43 # Pro CD
-atm8 = 31 # Gly C
+#atm5 = 36 # Pro N
+#atm6 = 37 # Pro CA
+#atm7 = 43 # Pro CD
+#atm8 = 31 # Gly C
 
 # Processing starts here
 arc = Anal_traj(arcname)
@@ -216,22 +288,22 @@ gasarc = Anal_traj(arcname_gas)
 #gasarc.vectors(atm1,atm2)
 
 # This time we need to create a new Z axis using the proline N/CA/CD
-arc.cross(atm1,atm2,atm3)
-gasarc.cross(atm5,atm6,atm7)
+arc.cross(atmlst)
+gasarc.cross(gatmlst)
 
 # These should be the same right?
 print arc.unitvec - gasarc.unitvec
 
 
 # Here we have to subtract the self field and average field str. across C=O
-prefix="1M9C_run1"
-prefix2="Run1_peptonly"
+prefix=args.solvprefix
+prefix2=args.gasprefix
 #newxyz(prefix,x)
-solfield = analyze_dipl_detailed(prefix,arc,atm4,atm1)
-gasfield = analyze_dipl_detailed(prefix2,gasarc,atm8,atm5)
+solfield = analyze_dipl_detailed(prefix,arc,atmlst)
+gasfield = analyze_dipl_detailed(prefix2,gasarc,gatmlst)
 field = solfield - gasfield
 
-writefield_cross("fields_atC_newZ_run1.txt",arc,field[0])
-writefield_cross("fields_atN_newZ_run1.txt",arc,field[1])
+writefield_cross(("fields_at_atom_%d.txt" % args.atoms[0]),arc,field[0])
+writefield_cross(("fields_at_atom_%d.txt" % args.atoms[1]),arc,field[1])
 #writefield("fields_atO.txt",x,field[1])
 
