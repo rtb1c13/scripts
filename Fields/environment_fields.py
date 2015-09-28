@@ -13,14 +13,14 @@ import sys,argparse
 from subprocess import call
 
 
-#Argparser
+### Argparser ###
 def parse():
    parser = argparse.ArgumentParser()
-   parser.add_argument("-a","--atoms",help="Atom numbers for analysis (Max 4)",nargs='+',type=int)
+   parser.add_argument("-a","--atoms",help="Atom numbers for analysis (Max 4)",nargs='+',type=int,required=True)
    parser.add_argument("-ga","--gasatoms",help="Atom numbers for analysis (Max 4)",nargs='+',type=int)
-   parser.add_argument("-d","--dummy",help="Calculates fields by inserting a dummy atom instead of using existing atom. Use with caution!",action="store_true")
+   parser.add_argument("-t","--type",help="Type of analysis to run. 'dummy' will insert a dummy atom between atoms 1 & 2. 'standard' will evaluate fields at atoms 1 & 2. 'env' will take the difference between the fields in the solvated and gas (probe only) phase at atoms 1 & 2. Defaults to standard. ",choices=['dummy','standard','env'],default='standard')
    parser.add_argument("-p","--polarise",help="Polarisabilities for atoms 1 & 2. Defaults to carbonyl C and O.",nargs=2,type=float,default=['1.3340','0.8370'])
-   parser.add_argument("-st","--solvtraj",help="Solvated trajectory file (Tinker arc, NO BOX INFO DUE TO BUG IN MDTRAJ)",type=str)
+   parser.add_argument("-st","--solvtraj",help="Solvated trajectory file (Tinker arc, NO BOX INFO DUE TO BUG IN MDTRAJ)",type=str,required=True)
    parser.add_argument("-gt","--gastraj",help="Gas phase trajectory file (Tinker arc, NO BOX INFO DUE TO BUG IN MDTRAJ)",type=str)
    parser.add_argument("-sp","--solvprefix",help="Prefix for solvated coordinate files (Tinker xyz, with box info)",type=str)
    parser.add_argument("-gp","--gasprefix",help="Prefix for gas-phase coordinate files (Tinker xyz, no box info)",type=str)
@@ -32,7 +32,8 @@ def parse():
    args = parser.parse_args()
    return args
 
-#Class for atoms
+
+### Class for atoms ###
 class Atom:
    """Class to define properties for atom numbers
       read in from command line arguments"""
@@ -56,7 +57,7 @@ class Atom:
       else:
          self.alpha = args.polarise[listidx]
 
-# Class for trajectory
+### Class for trajectory ###
 class Anal_traj:
    """Class to define all the desired analyses for a
       Tinker trajectory read in using MDTraj."""   
@@ -65,29 +66,29 @@ class Anal_traj:
       """Reads in Tinker trajectory arcname."""
       self.traj = md.load_arc(arcname)
 
-   def getcoords(self,atm1,atm2):
+   def getcoords(self,atmlst):
       """Gets coordinates of atom indices
-         atm1 & atm2. Units in Angstrom."""
+         atm1 & atm2 given in a list. Units in Angstrom."""
       self.coords1 = np.zeros((self.traj.n_frames,3))
       self.coords2 = np.zeros((self.traj.n_frames,3))
       for i in range(0,self.traj.n_frames):
-         self.coords1[i] = self.traj[i].xyz[0][atm1] *10
-         self.coords2[i] = self.traj[i].xyz[0][atm2] *10
+         self.coords1[i] = self.traj[i].xyz[0][atmlst[0].idx] *10
+         self.coords2[i] = self.traj[i].xyz[0][atmlst[1].idx] *10
 
-   def midpoints(self,atm1,atm2):
+   def midpoints(self,atmlst):
       """Defines the Cartesian coords midpoint between
          two atom indices (atm1 & atm2) for every frame
          in a trajectory. Returns 3 x trajectory length 
          numpy array."""
-      self.getcoords(atm1,atm2)
+      self.getcoords(atmlst)
       self.midp = np.zeros((self.traj.n_frames,3))
       for i in range(0,self.traj.n_frames):
          self.midp[i] = (self.coords2[i] + self.coords1[i]) / 2
 
-   def vectors(self,atm1,atm2):
+   def vectors(self):
       """Defines the interatomic vector, length and
-         unit vector along that path for atom indices
-         atm1, atm2. Returns three arrays:
+         unit vector along that path, assuming coordinates
+         for atoms are already defined. Returns three arrays:
           1) X/Y/Z vector components
           2) Interatomic vector length
           3) X/Y/Z unit vector components."""
@@ -248,62 +249,109 @@ def writefield_cross(fn,trajobj,field):
       outfile.write("%8.3f \n" % fieldproj)
    outfile.close()
 
+def dummy_field():
+   """Analyses field between two atoms by inserting
+      a dummy atom at midpoint between them. Field is
+      projected along internuclear vector"""
+   print "Reading in trajectory %s as the complete system. Ignoring any other flags" % args.solvtraj
+   arcname = args.solvtraj
+   arc = Anal_traj(arcname)
+   print "Calculating field between atoms %d and %d. Ignoring any other atoms defined" % (args.atoms[0],args.atoms[1])
+   atmlst=[]
+   for i in range(0,2):
+      j = Atom(args.atoms[i])
+      j.polarise(args.atoms[i])
+      atmlst.append(j)
+   # Get coordinates, midpoints & interatomic vector
+   arc.midpoints(atmlst)
+   arc.vectors()
+   # Get field
+   newxyz(args.solvprefix,arc)
+   field = analyze_dipl(args.solvprefix,arc)
+   writefield("fields_at_dummy.txt",arc,field)
+
+def standard_field():
+   """Analyses field at two atoms No gas-phase correction is made for
+      the self field of the probe. Field is projected along
+      internuclear vector or cross product of two related bonds"""
+   print "Reading in trajectory %s as the complete system. Ignoring any other flags" % args.solvtraj
+   arcname = args.solvtraj
+   arc = Anal_traj(arcname)
+   print "Calculating field at atoms %d and %d." % (args.atoms[0],args.atoms[1])
+   atmlst=[]
+   for i in args.atoms:
+      j = Atom(i)
+      j.polarise(i)
+      atmlst.append(j)
+   # Decide on where to project according to length of atom list
+   if len(atmlst) == 2:
+      print "Projecting along internuclear vector %d to %d" % (args.atoms[0],args.atoms[1])
+      arc.getcoords(atmlst)
+      arc.vectors()
+   elif len(atmlst) == 3:
+      print "Projecting along cross product %d to %d x %d to %d" % (args.atoms[0],args.atoms[1],args.atoms[0],args.atoms[2])
+      arc.cross(atmlst)
+   elif len(atmlst) == 4:
+      print "Projecting along cross product %d to %d x %d to %d" % (args.atoms[0],args.atoms[2],args.atoms[0],args.atoms[3])
+      arc.cross(atmlst)
+   # Get field
+   field = analyze_dipl_detailed(args.solvprefix,arc,atmlst)
+   writefield(("field_at_atom_%i.txt" % args.atoms[0]),arc,field[0])
+   writefield(("field_at_atom_%i.txt" % args.atoms[1]),arc,field[1])
+
+def env_field():
+   """Analyses field at two atoms Correction is made for
+      the self field of the probe. Field is projected along
+      internuclear vector or cross product of two related bonds"""
+   print "Reading in trajectory %s as the solvated system and %s as the gas system" % (args.solvtraj, args.gastraj)
+   arcname = args.solvtraj
+   arcname_gas = args.gastraj
+   arc = Anal_traj(arcname)
+   gasarc = Anal_traj(arcname_gas)
+   print "Calculating field at atoms %d and %d." % (args.atoms[0],args.atoms[1])
+   atmlst=[]
+   gatmlst=[]
+   for i in args.atoms:
+      j = Atom(i)
+      j.polarise(i)
+      atmlst.append(j)
+   for i in args.gasatoms:
+      j = Atom(i)
+      j.polarisegas(i)
+      gatmlst.append(j)
+   # Decide on where to project according to length of atom list
+   if len(atmlst) == 2:
+      print "Projecting along internuclear vector %d to %d" % (args.atoms[0],args.atoms[1])
+      arc.getcoords(atmlst)
+      arc.vectors()
+      gasarc.getcoords(gatmlst)
+      gasarc.vectors()
+   elif len(atmlst) == 3:
+      print "Projecting along cross product %d to %d x %d to %d" % (args.atoms[0],args.atoms[1],args.atoms[0],args.atoms[2])
+      arc.cross(atmlst)
+      gasarc.cross(gatmlst)
+   elif len(atmlst) == 4:
+      print "Projecting along cross product %d to %d x %d to %d" % (args.atoms[0],args.atoms[2],args.atoms[0],args.atoms[3])
+      arc.cross(atmlst)
+      gasarc.cross(gatmlst)
+   # Get field
+   solfield = analyze_dipl_detailed(args.solvprefix,arc,atmlst)
+   gasfield = analyze_dipl_detailed(args.gasprefix,gasarc,gatmlst)
+   field = solfield - gasfield
+   writefield(("field_at_atom_%i.txt" % args.atoms[0]),arc,field[0])
+   writefield(("field_at_atom_%i.txt" % args.atoms[1]),arc,field[1])
+
 ### MAIN BELOW HERE ###
-#def main()
+def main():
 
-# Read in tinker archive. INSERT FILENAME HERE.
-# Currently needs to be an archive without box dims (due to bug)
-args = parse()
-arcname = args.solvtraj
-arcname_gas = args.gastraj
-atmlst=[]
-for i in args.atoms:
-   j = Atom(i)
-   j.polarise(i)
-   atmlst.append(j)
-gatmlst=[]
-for i in args.gasatoms:
-   j = Atom(i)
-   j.polarisegas(i)
-   gatmlst.append(j)
+   global args
+   args = parse()
+   if args.type == "dummy":
+      dummy_field()
+   elif args.type == "standard":
+      standard_field()
+   elif args.type == "env":
+      env_field()
 
-# Indices of atoms we want to measure the field between, and calculate z axis with
-#atm1 = 2506 # Proline N
-#atm2 = 2507 # Proline CA
-#atm3 = 2513 # Proline CD
-#atm4 = 2501 # Glycine C
-
-#atm5 = 36 # Pro N
-#atm6 = 37 # Pro CA
-#atm7 = 43 # Pro CD
-#atm8 = 31 # Gly C
-
-# Processing starts here
-arc = Anal_traj(arcname)
-gasarc = Anal_traj(arcname_gas)
-#arc.getcoords(atm1,atm2)
-#gasarc.getcoords(atm1,atm2)
-#x.midpoints(atm1,atm2)
-#arc.vectors(atm1,atm2)
-#gasarc.vectors(atm1,atm2)
-
-# This time we need to create a new Z axis using the proline N/CA/CD
-arc.cross(atmlst)
-gasarc.cross(gatmlst)
-
-# These should be the same right?
-print arc.unitvec - gasarc.unitvec
-
-
-# Here we have to subtract the self field and average field str. across C=O
-prefix=args.solvprefix
-prefix2=args.gasprefix
-#newxyz(prefix,x)
-solfield = analyze_dipl_detailed(prefix,arc,atmlst)
-gasfield = analyze_dipl_detailed(prefix2,gasarc,gatmlst)
-field = solfield - gasfield
-
-writefield_cross(("fields_at_atom_%d.txt" % args.atoms[0]),arc,field[0])
-writefield_cross(("fields_at_atom_%d.txt" % args.atoms[1]),arc,field[1])
-#writefield("fields_atO.txt",x,field[1])
-
+############################################
+main()
