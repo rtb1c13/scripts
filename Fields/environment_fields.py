@@ -199,7 +199,7 @@ def analyze_dipl(prefix,trajobj):
 
 # This one makes use of existing atoms - no dummy atms. Takes longer as prints all interactions.
 # Can change analyze.f to improve this!
-def analyze_dipl_detailed(prefix,trajobj,atmlst):
+def analyze_dipl_detailed(prefix,trajobj,atmlst,gas):
    """Assigns induced dipole components for defined atoms
       using analyze. Note that the keyfile
       'test.key' must be prepared elsewhere, and should
@@ -212,7 +212,10 @@ def analyze_dipl_detailed(prefix,trajobj,atmlst):
    field = np.zeros((2,trajobj.traj.n_frames,3))
    for i in range(0,trajobj.traj.n_frames):
       xyz=prefix + ".%03d" % int(i+1)
-      call('analyze %s -k test.key d > analout.txt ' % xyz,shell=True)
+      if gas is True:
+         call('analyze %s -k testgas.key d > analout.txt ' % xyz,shell=True)
+      else:
+         call('analyze %s -k test.key d > analout.txt ' % xyz,shell=True)
       call('grep -A%s "Induced Dipole Moments (Debyes) :" analout.txt > dipls.txt ' % (trajobj.traj.n_atoms+3),shell=True)
       dipls = np.loadtxt("dipls.txt",skiprows=4,usecols=(1,2,3))
       field[0][i][0] = dipls[atm1][0]
@@ -295,7 +298,8 @@ def standard_field():
       print "Projecting along cross product %d to %d x %d to %d" % (args.atoms[0],args.atoms[2],args.atoms[0],args.atoms[3])
       arc.cross(atmlst)
    # Get field
-   field = analyze_dipl_detailed(args.solvprefix,arc,atmlst)
+   gas = False
+   field = analyze_dipl_detailed(args.solvprefix,arc,atmlst,gas)
    writefield(("field_at_atom_%i.txt" % args.atoms[0]),arc,field[0])
    writefield(("field_at_atom_%i.txt" % args.atoms[1]),arc,field[1])
 
@@ -335,8 +339,10 @@ def env_field():
       arc.cross(atmlst)
       gasarc.cross(gatmlst)
    # Get field
-   solfield = analyze_dipl_detailed(args.solvprefix,arc,atmlst)
-   gasfield = analyze_dipl_detailed(args.gasprefix,gasarc,gatmlst)
+   gas = False
+   solfield = analyze_dipl_detailed(args.solvprefix,arc,atmlst,gas)
+   gas = True
+   gasfield = analyze_dipl_detailed(args.gasprefix,gasarc,gatmlst,gas)
    field = solfield - gasfield
    writefield(("field_at_atom_%i.txt" % args.atoms[0]),arc,field[0])
    writefield(("field_at_atom_%i.txt" % args.atoms[1]),arc,field[1])
@@ -345,6 +351,7 @@ def env_field():
 def main():
 
    global args
+   global gas
    args = parse()
    if args.type == "dummy":
       dummy_field()
