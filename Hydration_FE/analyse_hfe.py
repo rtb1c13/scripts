@@ -109,20 +109,34 @@ def t_test_diffs(data,data2,outfile):
    signdev2 = []
    for i in data2:
       signdev2.append(i[1] - i[0])
+   tstat,p = stats.shapiro(signdev)
+   tstat,p2 = stats.shapiro(signdev2)
+   f.write("Signed err Shapiro-Wilks (normality) p-orig, p-current = %6.4f, %6.4f\n" % (p,p2))
    tstat,p = stats.ttest_ind(signdev,signdev2)
    f.write("Signed err Independent p = %6.4f\n" % p)
    tstat,p = stats.ttest_rel(signdev,signdev2)
    f.write("Signed err Related p = %6.4f\n" % p)
+   tstat,p = stats.wilcoxon(signdev,signdev2)
+   f.write("Signed err Wilcoxon p = %6.4f\n" % p)
+   tstat,p = stats.mannwhitneyu(signdev,signdev2)
+   f.write("Signed err Mann-Whitney U p = %6.4f\n" % p)
    absdev = []
    for i in data:
       absdev.append(np.absolute(i[1] - i[0]))
    absdev2 = []
    for i in data2:
       absdev2.append(np.absolute(i[1] - i[0]))
+   tstat,p = stats.shapiro(absdev)
+   tstat,p2 = stats.shapiro(absdev2)
+   f.write("Abs err Shapiro-Wilks (normality) p-orig, p-current = %6.4f, %6.4f\n" % (p,p2))
    tstat,p = stats.ttest_ind(absdev,absdev2)
    f.write("Abs err Independent p = %6.4f\n" % p)
    tstat,p = stats.ttest_rel(absdev,absdev2)
    f.write("Abs err Related p = %6.4f\n" % p)
+   tstat,p = stats.wilcoxon(absdev,absdev2)
+   f.write("Abs err Wilcoxon p = %6.4f\n" % p)
+   tstat,p = stats.mannwhitneyu(absdev,absdev2)
+   f.write("Abs err Mann-Whitney U p = %6.4f\n" % p)
    f.close()
 
 def calc_anova(anova,outfile):
