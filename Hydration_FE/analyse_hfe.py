@@ -75,7 +75,7 @@ def correls_for_bootstrap(data):
    return slope,intercept,r_value,r2,p_value,std_err,tau,taup 
 
 def write_data(fn,data):
-   """Performs stats and writes stats to output file"""
+   """Performs descriptive stats and writes stats to output file"""
 
    f = open(fn,'w')
    mue,muese = MUE(data)
@@ -152,9 +152,6 @@ def calc_anova(anova,outfile):
       f_stat,p = stats.f_oneway(*anova_args)
       f.write("%8s %8.4f\n" %(lig[0],p))
    f.close()
-      
-
-
 
 ### Main below here
 
@@ -166,6 +163,9 @@ def main():
    fn = prefix+".txt"
    outfile = prefix+"_results.txt"
    data = np.genfromtxt(fn)
+#   ligindex = [4,5,6,7,8,27,28,29,30,31,32,33,34] # Can be used to analyse a subset of ligands
+#   data = data[ligindex]
+#   print data
    data = np.hsplit(data,[1]) # Split expt values apart
    expt = data[0]
    comput = data[1]
@@ -176,8 +176,9 @@ def main():
    for argfile in args.files[1:]:
       prefix = argfile.split(".")[0] 
       fn = prefix+".txt"
-      outfile = prefix+"_results_vs_Gaff.txt"
+      outfile = prefix+"_results_vs_file1.txt"
       data = np.genfromtxt(fn)
+#      data = data[ligindex]
       data = np.hsplit(data,[1]) # Split expt values apart
       expt = data[0]
       comput = data[1]
@@ -186,8 +187,9 @@ def main():
       write_data(outfile,currdata)
       t_test_diffs(origdata,currdata,outfile)
    # Now do Anova      
-   calc_anova(anova,"Anovas_inc_Gaff.txt")
+   calc_anova(anova,"Anovas.txt")
 
    
 ### Main below here
-main()
+if __name__ == __main__:
+   main()

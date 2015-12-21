@@ -16,57 +16,25 @@ sdev = np.zeros(len(data))
 for i,j in enumerate(data[:,1:4]):
    y[i] = np.mean(j)
    sdev[i] = np.std(j)
-print y
 
 
 # Plotting - scatter with error bars
-fig,sfigs=plt.subplots(nrows=2,ncols=1,sharex=True,sharey=True,figsize=(8,10))
-fig.gca().invert_yaxis()
-fig.gca().invert_xaxis()
-sfig=sfigs[0]
-sfig.errorbar(x,y,yerr=sdev,fmt='x',ms=6,mew=1.0,ecolor='black',color='blue',capthick=2)
-sfig.ylim=(-25,5)
-#sfig.gca().invert_yaxis()
-#sfig.gca().invert_xaxis()
+plt.errorbar(x,y,yerr=sdev,fmt='x',ms=6,mew=1.0,ecolor='black',color='blue',capthick=2)
+plt.ylim=(-25,5)
+plt.xlim=(-25,5)
 # Regression
 m,c = np.polyfit(x,y,1)
 xreg = np.arange(-25,6)
-sfig.plot(xreg,m*xreg+c,'-',color='black',lw=1,label="Linear fit")
-sfig.plot(xreg,xreg,'--',color='black',lw=1,label="y = x")
+plt.plot(xreg,m*xreg+c,'-',color='black',lw=1,label="Linear fit")
+plt.plot(xreg,xreg,'--',color='black',lw=1,label="y = x")
 # Labels
-sfig.legend(loc=2)
-sfig.set_title("HFEs of parameter set 1: Poltype",fontweight='bold')
-sfig.set_xlabel(r"Experimental $\Delta$G / kcal mol$^{-1}$")
-sfig.set_ylabel(r"Predicted $\Delta$G / kcal mol$^{-1}$")
+plt.legend(loc=2,fontsize=12)
+plt.xlabel(r"Experimental $\Delta$G / kcal mol$^{-1}$")
+plt.ylabel(r"Predicted $\Delta$G / kcal mol$^{-1}$")
+plt.gca().invert_yaxis()
+plt.gca().invert_xaxis()
 
-#Sfig 2
-data = np.genfromtxt(fn[1])
-x = data[:,0]
-y = np.zeros(len(data))
-sdev = np.zeros(len(data))
-for i,j in enumerate(data[:,1:4]):
-   y[i] = np.mean(j)
-   sdev[i] = np.std(j)
-print y
-# Scatter with error bars
-sfig=sfigs[1]
-sfig.errorbar(x,y,yerr=sdev,fmt='x',ms=6,mew=1.0,ecolor='black',color='blue',capthick=2)
-sfig.ylim=(-25,5)
-fig.gca().invert_yaxis()
-fig.gca().invert_xaxis()
-#sfig.gca().invert_yaxis()
-#sfig.gca().invert_xaxis()
-# Regression
-m,c = np.polyfit(x,y,1)
-xreg = np.arange(-25,6)
-sfig.plot(xreg,m*xreg+c,'-',color='black',lw=1,label="Linear fit")
-sfig.plot(xreg,xreg,'--',color='black',lw=1,label="y = x")
-# Labels
-sfig.legend(loc=2)
-sfig.set_title("HFEs of parameter set 2: New polgps",fontweight='bold')
-sfig.set_xlabel(r"Experimental $\Delta$G / kcal mol$^{-1}$")
-sfig.set_ylabel(r"Predicted $\Delta$G / kcal mol$^{-1}$")
 # Show/save
 
-
+plt.suptitle("Hydration FE predictions with parameter set 1: Poltype",fontweight='bold')
 plt.savefig("Fig1.eps",dpi=300,format="eps")
