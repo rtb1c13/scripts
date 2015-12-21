@@ -5,6 +5,8 @@
 # Kendall's tau, R**2 and print out to file
 # Author: Richard Bradshaw, R.T.Bradshaw@soton.ac.uk
 
+# Requirements: Numpy, scipy.stats, scikits.bootstrap
+
 import numpy as np
 import scipy.stats as stats
 import scikits.bootstrap as boot
