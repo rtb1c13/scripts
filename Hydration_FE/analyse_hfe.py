@@ -191,5 +191,5 @@ def main():
 
    
 ### Main below here
-if __name__ == __main__:
+if __name__ == "__main__":
    main()
