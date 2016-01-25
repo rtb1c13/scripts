@@ -19,7 +19,7 @@ def parse():
    parser.add_argument("-a","--atoms",help="Atom numbers for analysis (Max 4)",nargs='+',type=int,required=True)
    parser.add_argument("-ga","--gasatoms",help="Atom numbers for analysis (Max 4)",nargs='+',type=int)
    parser.add_argument("-t","--type",help="Type of analysis to run. 'dummy' will insert a dummy atom between atoms 1 & 2. 'standard' will evaluate fields at atoms 1 & 2. 'env' will take the difference between the fields in the solvated and gas (probe only) phase at atoms 1 & 2. Defaults to standard. ",choices=['dummy','standard','env'],default='standard')
-   parser.add_argument("-p","--polarise",help="Polarisabilities for atoms 1 & 2. Defaults to carbonyl C and O.",nargs=2,type=float,default=['1.3340','0.8370'])
+   parser.add_argument("-p","--polarise",help="Polarisabilities for atoms 1 & 2. Defaults to carbonyl C and O.",nargs=2,type=float,default=[1.3340,0.8370])
    parser.add_argument("-st","--solvtraj",help="Solvated trajectory file (Tinker arc, NO BOX INFO DUE TO BUG IN MDTRAJ)",type=str,required=True)
    parser.add_argument("-gt","--gastraj",help="Gas phase trajectory file (Tinker arc, NO BOX INFO DUE TO BUG IN MDTRAJ)",type=str)
    parser.add_argument("-sp","--solvprefix",help="Prefix for solvated coordinate files (Tinker xyz, with box info)",type=str)
