@@ -29,7 +29,7 @@ def histogram(values):
    """Shows histogram of results in values"""
    n, bins, patches = plt.hist(values, 50, normed=1, color='blue')
    dens = stats.kde.gaussian_kde(values)
-   x = np.arange(-80.,30.,2.)
+   x = np.arange(np.min(values)-20.,np.max(values)+20.,2.)
    plt.plot(x,dens(x),color='black',lw=3)
    plt.xlabel(r"Field strength / MV cm$^{-1}$")
    plt.ylabel("Normalised density")
