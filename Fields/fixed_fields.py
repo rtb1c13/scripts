@@ -109,6 +109,29 @@ class Anal_traj:
          self.leng[i] = np.linalg.norm(cross)
          self.unitvec[i] = cross / self.leng[i]
 
+   def vectors(self,atmlst):
+      """Defines the interatomic vector, length and
+         unit vector along that path between atoms
+         1 & 2. Returns three arrays:
+          1) X/Y/Z vector components
+          2) Interatomic vector length
+          3) X/Y/Z unit vector components."""
+      self.vec = np.zeros((self.traj.frame,3))
+      self.leng = np.zeros(self.traj.frame)
+      self.unitvec = np.zeros((self.traj.frame,3))
+      atm1 = atmlst[0].idx
+      atm2 = atmlst[1].idx
+      self.coords1 = np.zeros((self.traj.frame,3))
+      self.coords2 = np.zeros((self.traj.frame,3))
+      for i in range(0,self.traj.frame):
+         self.coords1[i] = self.traj.coordinates(i)[(atm1*3):(atm1*3)+3]
+         self.coords2[i] = self.traj.coordinates(i)[(atm2*3):(atm2*3)+3]
+      for i in range(0,self.traj.frame):
+         self.vec[i] = self.coords2[i] - self.coords1[i]
+         self.leng[i] = np.linalg.norm(self.vec[i])
+         self.unitvec[i] = self.vec[i] / self.leng[i]
+
+
    def sanderforce(self,parmstr,atmlst,boxflag=False,pmeflag=False):
       """Calculates energy and forces for a provided
          Amber parm string and set of coordinates using the Sander
@@ -190,7 +213,7 @@ def frc2field(frc,atmlst):
    fields[1] = fields[1]/(atmlst[1].chg * 96485.3329)
    return fields
 
-def writefield_cross(fn,trajobj,field):
+def writefield(fn,trajobj,field):
    """Writes out field projections in MV/cm 
       along unit vector at desired coordinate"""
 
@@ -244,9 +267,12 @@ def main():
    elefrc = subtract_frcs(orig_trajectory.forces,new_trajectory.forces)
    # Fields and projection
    fields = frc2field(elefrc,atoms)
-   orig_trajectory.cross(atoms)
-   writefield_cross("field_at_%i.txt" % args.atoms[0],orig_trajectory,fields[0])
-   writefield_cross("field_at_%i.txt" % args.atoms[1],orig_trajectory,fields[1])
+   if len(atoms) > 2:
+      orig_trajectory.cross(atoms)
+   else:
+      orig_trajectory.vectors(atoms)
+   writefield("field_at_%i.txt" % args.atoms[0],orig_trajectory,fields[0])
+   writefield("field_at_%i.txt" % args.atoms[1],orig_trajectory,fields[1])
 
 ############################################
 main()
