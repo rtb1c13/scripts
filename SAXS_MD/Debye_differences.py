@@ -168,11 +168,11 @@ class Conformer:
    def __init__(self,univ,frame=None,**kwargs):
       self.atms = atoms_slice(univ,**kwargs)
       if frame is not None:
-         self.coords = get_coords(self.atms,u.trajectory[frame]) 
+         self.coords = get_coords(self.atms,univ.trajectory[frame]) 
       else:
          self.coords = get_coords(self.atms)
       self.intensities={}
-      self.label = u.trajectory.frame
+      self.label = univ.trajectory.frame + 1
 
    def _gen_matrix(self):
       """Creates symmetrical matrix from input array of length N(N-1/2).
@@ -217,7 +217,7 @@ def write_profile(conf,qmin=0.01,qmax=0.50,step=0.01):
          Q1 = QPoint(q)
          Q1.get_ff(args.formfactor,conf.atms)
          conf.intensities[q] = Q1.calc_intensities(conf.distmatx)
-   with open(args.traj+'.dat','a') as f:
+   with open(args.traj+'.f%s.dat' % conf.label,'a') as f:
       for q in np.arange(qmin,qmax+step,step):
          f.write('%5.3f %12.6f\n' % (q,np.sum(conf.intensities[q])))
 
@@ -247,32 +247,32 @@ def plot_diffmatrix(ref,probe,q=0.1):
    plt.savefig('Diffs_%s-%s_%s.png' % (ref.label,probe.label,q),bbox_inches='tight',dpi=300)
       
 
-#### main below here
-global args
-args = parse()
-u = setup_universe(args.parm,args.traj)
-if len(args.frames) == 1:                   # Profile only
-   conf1 = Conformer(u,frame=args.frames[0]-1,atoms=args.select)
-   conf1.get_distmatrix()
-   write.profile(conf1)
-elif len(args.frames) == 2:                 # Difference matrix
-   conflist = []
-   for conf in args.frames:
-      currconf = Conformer(u,frame=conf,atoms=args.select) 
-      currconf.get_distmatrix()
-      for q in args.qvalues:
-         Q1 = QPoint(q)
-         Q1.get_ff(args.formfactor,currconf.atms)
-         currconf.intensities[q] = Q1.calc_intensities(currconf.distmatx)
-      conflist.append(currconf)
-   for q in args.qvalues:
-      plot_diffmatrix(conflist[0],conflist[1],q)
-else:                                       # Trajectory slice
-   trajslice = get_trajslice(u,args.frames[0],args.frames[1],args.frames[2])
-   for frame in trajslice:
+############ main below here ################
+def main():
+   global args
+   args = parse()
+   u = setup_universe(args.parm,args.traj)
+   if len(args.frames) == 1:                   # Profile only
       conf1 = Conformer(u,frame=args.frames[0]-1,atoms=args.select)
       conf1.get_distmatrix()
-      write.profile(conf1)
-      
-
-      
+      write_profile(conf1)
+   elif len(args.frames) == 2:                 # Difference matrix
+      conflist = []
+      for conf in args.frames:
+         currconf = Conformer(u,frame=conf,atoms=args.select) 
+         currconf.get_distmatrix()
+         for q in args.qvalues:
+            Q1 = QPoint(q)
+            Q1.get_ff(args.formfactor,currconf.atms)
+            currconf.intensities[q] = Q1.calc_intensities(currconf.distmatx)
+         conflist.append(currconf)
+      for q in args.qvalues:
+         plot_diffmatrix(conflist[0],conflist[1],q)
+   else:                                       # Trajectory slice
+      trajslice = get_trajslice(u,args.frames[0],args.frames[1],args.frames[2])
+      for ts in trajslice:
+         conf1 = Conformer(u,frame=ts.frame-1,atoms=args.select)
+         conf1.get_distmatrix()
+         write_profile(conf1)
+###############################################################      
+main()      
