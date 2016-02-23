@@ -29,7 +29,7 @@ def parse():
    parser.add_argument("-ff","--formfactor",help="Formfactor file for desired structure. Note that formfactors for Hydrogens should be included in their attached heavy atoms. This script does not currently support explicit hydrogens",type=str,required=True)
    parser.add_argument("-f","--frames",help="Frames to analyse. If you supply one frame here, a SAXS profile will be generated. Two frames will generate a difference plot. Three frames will be used as the start, stop & stride values through a trajectory, and generate a profile for each one (WARNING, TIME CONSUMING!). Defaults to calculating the profile of the first frame",nargs='+',type=int,default=1)
    parser.add_argument("-q","--qvalues",help="List of Q-values for analysis. Defaults to 0.1",nargs='*',type=float,default=[0.1])
-   parser.add_argument("-s","--select",help="Selection string for atoms to analyse from trajectory (in CHARMM/VMD format). Formfactor file should be pre-processed to only include these atoms.",nargs='*',type=str,default='protein and not name H*')
+   parser.add_argument("-s","--select",help="Selection string for atoms to analyse from trajectory (in CHARMM/VMD format). Formfactor file should be pre-processed to only include these atoms.",type=str,default='protein and not name H*')
  
 
    if len(sys.argv)==1:
@@ -241,7 +241,8 @@ def plot_diffmatrix(ref,probe,q=0.1):
    plt.imshow(diffs,interpolation='None',vmin=arrmin,vmax=arrmax,cmap=cm.RdBu)
 #   plt.gca().set_xticks(range(1,len(ref.atms)+1,200))
 #   plt.gca().set_yticks(range(len(ref.atms),0,-200))
-   plt.title('Intensity difference matrix, frames %s-%s Q=%s' % (ref.label,probe.label,q))
+   plt.suptitle('Intensity difference matrix, frames %s-%s Q=%s' % (ref.label,probe.label,q),y=0.98,fontsize=14)
+   plt.title('Atoms selected = "%s", zero indexed' % args.select,fontsize=10)
    plt.colorbar()
    plt.savefig('Diffs_%s-%s_%s.png' % (ref.label,probe.label,q),bbox_inches='tight',dpi=300)
       
