@@ -259,7 +259,7 @@ def main():
    elif len(args.frames) == 2:                 # Difference matrix
       conflist = []
       for conf in args.frames:
-         currconf = Conformer(u,frame=conf,atoms=args.select) 
+         currconf = Conformer(u,frame=conf-1,atoms=args.select) 
          currconf.get_distmatrix()
          for q in args.qvalues:
             Q1 = QPoint(q)
