@@ -238,7 +238,7 @@ def plot_diffmatrix(ref,probe,q=0.1):
    arrmax = absmax(diffs)
    arrmin = arrmax*-1
    plt.figure()
-   plt.imshow(diffs,interpolation='None',vmin=arrmin,vmax=arrmax,cmap=cm.RdBu)
+   plt.imshow(diffs,interpolation='None',vmin=arrmin/2,vmax=arrmax/2,cmap=cm.RdBu)
 #   plt.gca().set_xticks(range(1,len(ref.atms)+1,200))
 #   plt.gca().set_yticks(range(len(ref.atms),0,-200))
    plt.suptitle('Intensity difference matrix, frames %s-%s Q=%s' % (ref.label,probe.label,q),y=0.98,fontsize=14)

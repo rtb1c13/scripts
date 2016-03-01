@@ -153,6 +153,9 @@ def write_struct(struct,name):
 
 if termini is True:
    structure = rename_termini(structure) 
+print """If you have separate chains in your PDB (separated by a TER card),
+         make sure they have a chain identifier in column 22, in accordance
+         with the PDB version 3 format. Biopython is expecting this!"""
 structure = amb2gmx(structure)
 write_struct(structure,pdbname)
 print "Done."
