@@ -12,6 +12,7 @@
 
 from Bio import PDB
 import itertools
+import _PDBIO_edit # Slightly modified PDBIO available in rtb1c13 github
 
 # Inputs
 avename = '6G08_average.pdb'
@@ -35,7 +36,8 @@ for model in eigpdb:
          new.set_serial_number(old.get_serial_number) # Replace new with old
          print new
 
-
-io = PDB.PDBIO()
+# Have had to hack PDBIO class to print out atom serial numbers
+# Otherwise it just prints out numbers sequentially!
+io = _PDBIO_edit.PDBIO()
 io.set_structure(eigpdb)
 io.save(outname)
