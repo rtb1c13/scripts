@@ -33,6 +33,17 @@ plt.xlabel(r"Experimental $\Delta$G / kcal mol$^{-1}$")
 plt.ylabel(r"Predicted $\Delta$G / kcal mol$^{-1}$")
 plt.gca().invert_yaxis()
 plt.gca().invert_xaxis()
+# Annotations of 25 & 42 
+plt.gca().annotate('Solute 25', style='italic', xy=(-4.15,-6.40),xycoords='data',
+                   xytext=(-100,20),textcoords='offset points',
+                   arrowprops=dict(arrowstyle="->",
+                                   connectionstyle="angle3,angleA=-90,angleB=0"),
+                   )
+plt.gca().annotate('Solute 42', style='italic', xy=(-14.21,-11.20),xycoords='data',
+                   xytext=(20,-30),textcoords='offset points',
+                   arrowprops=dict(arrowstyle="->",
+                                   connectionstyle="angle3,angleA=0,angleB=-90"),
+                   )
 
 # Show/save
 
