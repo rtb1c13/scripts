@@ -74,9 +74,14 @@ def saveplot(arr):
       for i, (x_val, y_val) in enumerate(zip(x.flatten(), y.flatten())):
          if x_val < y_val:
             continue
+         elif x_val == y_val:
+            continue
          else:
             txt = int(heatmap.flatten()[i]) # Only for top half of fig
-            plt.gca().text(x_val, y_val, txt, va='center', ha='center',color='white') # Plot text labels
+            if txt < 10:
+               plt.gca().text(x_val, y_val, txt, va='center', ha='center',color='black') # Plot text labels
+            else:
+               plt.gca().text(x_val, y_val, txt, va='center', ha='center',color='white') # Plot text labels
       plt.suptitle('Tukey HSD significance map, parameter sets 1-7',y=0.98,fontsize=14)
       plt.colorbar()
       plt.savefig('Tukey_HSD_heatmap.eps',bbox_inches='tight',dpi=300)
