@@ -241,16 +241,14 @@ def writefield(fn,trajobj,field):
    outfile.close()
 
 # Projection along cross product of defined vectors
-def writefield_cross(fn,trajobj,field):
-   """Writes out field projections in MV/cm 
-      along unit vector at desired coordinate"""
+def writefield_components(fn,trajobj,field):
+   """Writes out field xyz components in MV/cm 
+      at desired coordinate, along with unit vector
+      for projection"""
 
-   outfile = open(fn,'w')
-   for i in range(0,trajobj.traj.n_frames):
-      fieldproj = np.dot(field[i], trajobj.unitvec[i])
-      fieldproj = fieldproj * 299.79
-      outfile.write("%8.3f \n" % fieldproj)
-   outfile.close()
+   currfield = field * 299.79
+   output = np.concatenate((currfield,trajobj.unitvec),axis=1)
+   np.savetxt(fn,output,fmt="%8.3f")
 
 def dummy_field():
    """Analyses field between two atoms by inserting
@@ -346,6 +344,8 @@ def env_field():
    field = solfield - gasfield
    writefield(("field_at_atom_%i.txt" % args.atoms[0]),arc,field[0])
    writefield(("field_at_atom_%i.txt" % args.atoms[1]),arc,field[1])
+   writefield_components(("field_components_at_atom_%i.txt" % args.atoms[0]),arc,field[0])
+   writefield_components(("field_components_at_atom_%i.txt" % args.atoms[1]),arc,field[1])
 
 ### MAIN BELOW HERE ###
 def main():
