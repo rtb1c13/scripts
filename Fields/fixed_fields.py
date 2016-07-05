@@ -94,9 +94,9 @@ class Anal_traj:
       self.coords2 = np.zeros((self.traj.frame,3))
       self.coords3 = np.zeros((self.traj.frame,3))
       for i in range(0,self.traj.frame):
-         self.coords1[i] = self.traj.coordinates(i)[(atm1*3):(atm1*3)+3]
-         self.coords2[i] = self.traj.coordinates(i)[(atm2*3):(atm2*3)+3]
-         self.coords3[i] = self.traj.coordinates(i)[(atm3*3):(atm3*3)+3]
+         self.coords1[i] = self.traj.coordinates[i][atm1]
+         self.coords2[i] = self.traj.coordinates[i][atm2]
+         self.coords3[i] = self.traj.coordinates[i][atm3]
       self.vec1 = np.zeros((self.traj.frame,3))
       self.vec2 = np.zeros((self.traj.frame,3))
       self.leng = np.zeros(self.traj.frame)
@@ -123,8 +123,8 @@ class Anal_traj:
       self.coords1 = np.zeros((self.traj.frame,3))
       self.coords2 = np.zeros((self.traj.frame,3))
       for i in range(0,self.traj.frame):
-         self.coords1[i] = self.traj.coordinates(i)[(atm1*3):(atm1*3)+3]
-         self.coords2[i] = self.traj.coordinates(i)[(atm2*3):(atm2*3)+3]
+         self.coords1[i] = self.traj.coordinates[i][atm1]
+         self.coords2[i] = self.traj.coordinates[i][atm2]
       for i in range(0,self.traj.frame):
          self.vec[i] = self.coords2[i] - self.coords1[i]
          self.leng[i] = np.linalg.norm(self.vec[i])
@@ -153,9 +153,9 @@ class Anal_traj:
       else:
          inp = sander.gas_input()
       for i in range(0,self.traj.frame):
-         coord = self.traj.coordinates(i)
+         coord = self.traj.coordinates[i]
          if boxflag is True:
-            box = self.traj.box(i)
+            box = self.traj.box[i]
 #           print box
          else:
             box = None
