@@ -9,9 +9,8 @@
 
 import sander
 import sys,argparse
-import ParmedTools as parmed
 import numpy as np
-from chemistry import amber, unit as u
+from parmed import amber, unit as u, tools as ptools
 
 ### Argparser ###
 def parse():
@@ -63,7 +62,7 @@ class Prmfile:
 
       invmask = "!" + atmmask
 #      print "invmask
-      act = parmed.change(self.discharged, 'charge', invmask, 0.000)
+      act = ptools.change(self.discharged, 'charge', invmask, 0.000)
       act.execute()
 
 ###Class for trajectories###

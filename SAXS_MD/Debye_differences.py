@@ -238,11 +238,19 @@ def plot_diffmatrix(ref,probe,q=0.1):
    arrmax = absmax(diffs)
    arrmin = arrmax*-1
    plt.figure()
-   plt.imshow(diffs,interpolation='None',vmin=arrmin/2,vmax=arrmax/2,cmap=cm.RdBu)
-#   plt.gca().set_xticks(range(1,len(ref.atms)+1,200))
-#   plt.gca().set_yticks(range(len(ref.atms),0,-200))
+   plt.imshow(diffs,interpolation='None',vmin=arrmin,vmax=arrmax,cmap=cm.RdBu)
+   xticklabs = [1]
+   final = len(ref.atms)
+   intermedx = range(100,((len(ref.atms)/100)+1)*100,100) # Integer division
+   xticklabs.extend(intermedx)
+   xticklabs.append(final)
+   yticklabs = xticklabs[::-1]
+   plt.gca().set_xticks([i-1 for i in xticklabs])
+   plt.gca().set_yticks([i-1 for i in yticklabs])
+   plt.gca().set_xticklabels(xticklabs)
+   plt.gca().set_yticklabels(yticklabs)
    plt.suptitle('Intensity difference matrix, frames %s-%s Q=%s' % (ref.label,probe.label,q),y=0.98,fontsize=14)
-   plt.title('Atoms selected = "%s", zero indexed' % args.select,fontsize=10)
+   plt.title('Atoms selected = "%s"' % args.select,fontsize=10)
    plt.colorbar()
    plt.savefig('Diffs_%s-%s_%s.png' % (ref.label,probe.label,q),bbox_inches='tight',dpi=300)
       
