@@ -91,12 +91,15 @@ def plot_scatter(fields,crosses):
    cbar = fig.colorbar(tri)
    cbar.set_label("Total field strength / MV cm$^{-1}$",fontsize=16)
    plt.legend((x_ax,dots,tri),['xyz axes','Pro ring normal','Field'])
-   plt.title('Field distribution about glycine C',fontsize=20)
+   plt.title('Field distribution about proline N',fontsize=20)
    for ang in xrange(0,360,10):
       ax.view_init(azim=ang)
-      plt.savefig("Pro_C"+str(ang)+".png")
+      plt.savefig("Pro_N_"+str(ang)+".png")
 
-
+def write_avgs(farray,fn="mean_field.txt",ax=0):
+   """Writes out mean of array (default across axis 0) to text file"""
+#  Reshaped to 2D to print out columns delimited by ' ' properly
+   np.savetxt(fn,np.reshape(np.mean(farray,axis=ax),(1,3)),fmt='%10.5f')
 
 def rot_and_plot():
    """Main function - rotates and plots quiver graphs of vectors"""
@@ -107,7 +110,8 @@ def rot_and_plot():
    rotatedcrosses = rotate_vectors(crosses,rotmats)
    plot_quiver(rotatedfields)
    plot_scatter(rotatedfields,rotatedcrosses)
-
+   write_avgs(rotatedfields,fn="Average_field.txt")
+   write_avgs(rotatedcrosses,fn="Average_crossprod.txt")
 
 
 # Main below here
