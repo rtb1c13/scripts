@@ -222,6 +222,12 @@ def writefield(fn,trajobj,field):
       outfile.write("%8.3f \n" % fieldproj)
    outfile.close()
 
+def writefield_components(fn,field):
+   """Writes out components of field in MV/cm 
+      at desired coordinate"""
+
+   np.savetxt(fn,field,fmt='%8.3f')
+
 def debug_energies(fn,traj):
    """Prints out energies calculated internally
       using pysander API for comparison with those
@@ -260,8 +266,8 @@ def main():
    atoms = [Atom(i) for i in args.atoms]
    [i.charge(parameters) for i in atoms]
    # Work out original forces
-   orig_trajectory.sanderforce(args.parm,atoms,boxflag=True,pmeflag=True)
-   new_trajectory.sanderforce("discharged.parm7",atoms,boxflag=True,pmeflag=True)
+   orig_trajectory.sanderforce(args.parm,atoms,boxflag=False,pmeflag=False)
+   new_trajectory.sanderforce("discharged.parm7",atoms,boxflag=False,pmeflag=False)
    debug_energies("Energies.txt",orig_trajectory)
    elefrc = subtract_frcs(orig_trajectory.forces,new_trajectory.forces)
    # Fields and projection
@@ -272,6 +278,8 @@ def main():
       orig_trajectory.vectors(atoms)
    writefield("field_at_%i.txt" % args.atoms[0],orig_trajectory,fields[0])
    writefield("field_at_%i.txt" % args.atoms[1],orig_trajectory,fields[1])
+   writefield_components("field_components_at_%i.txt" % args.atoms[0],fields[0])
+   writefield_components("field_components_at_%i.txt" % args.atoms[1],fields[1])
 
 ############################################
 main()

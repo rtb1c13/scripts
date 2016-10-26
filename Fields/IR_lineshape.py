@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+
+# Initial script to analyse IR line shapes using methodology of Corcelli et al.
+
+# IR absorption line shape is "Fourier transform of frequency fluctuations
+# averaged over finite time interval, t"
+
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.integrate as igt
+
+# Import raw field strengths
+data = np.genfromtxt("3VSY_Amoeba_Runs1-3.txt",usecols=(0))
+
+# Convert to wavenumbers using quadratic function of Fried et al
+freqs = (-0.002915*data**2) + (0.9344*data) + 1735.3
+freqs = freqs*2.998e08 # Convert to Hz
+
+# Array of times
+Fs = 1e11 # Sampling rate s-1
+Ts = 1.0/Fs # Time interval
+times = np.arange(0,75e-09,Ts) # time vector
+#times = times/100 # snapshots to ns
+#times = times*1e-09 # ns to s
+
+# Times -> Frequencies
+n = len(freqs)
+k = np.arange(n)
+T = n/Fs
+frq = k/T # Set of frequencies
+frq = frq/2.998e08 # Frq -> Wavenumbers
+
+# Calculate time averages
+#timeaves = np.zeros((len(freqs),len(freqs)))
+#integrals = np.zeros((len(freqs),len(freqs)))
+#expt = np.zeros((len(freqs),len(freqs)),dtype="complex64")
+devs = freqs - np.mean(freqs)
+integrals = None
+
+# Create FT variable
+for i,ival in enumerate(freqs):
+   if integrals is None:
+      integrals = igt.cumtrapz(devs,x=times)
+      expt = np.exp(1j*integrals)
+   else:
+      tmpintegrals = igt.cumtrapz(devs[i:],x=times[:-i])
+      tmpexpt = np.exp(1j*tmpintegrals)
+      tmpintegrals.resize((7499,))
+      tmpexpt.resize((7499,))
+      integrals = np.vstack((integrals,tmpintegrals))
+      expt = np.vstack((expt,tmpexpt))
+
+# Create fftvar that's average down columns (excluding any 0 values)
+fftvar = np.zeros(len(expt)-1,dtype="complex64") # Final row is all null, hence len(expt)-1
+for i in range(len(expt)-1):
+   fftvar[i] = np.mean(expt[:,i][0:len(expt)-1-i])
+
+# Do fft
+fftout = np.fft.fft(fftvar)
+plt.plot(frq[1:],abs(fftout))
+plt.show()
+
+      
+#   for y in range(x,len(freqs)):
+#      integrals[x][y] = np.trapz(devs[y:x+y+1],times[y:x+y+1])
+#      timeaves[x][y] = 1/times[x] * np.trapz(devs[y:x+y+1],times[y:x+y+1])
+#      expt[x][y] = np.exp(1j*integrals[x][y])
+
+# Autocorrelation in devs
+#auto = np.correlate(freqs,freqs,mode="full")
+
+# Do forward fft
+#fftout = np.fft.fft(expt)
+
+# Plot all 4
+#fig,ax = plt.subplots(4,1)
+#ax[0].plot(times,timeaves)
+#ax[1].plot(times,integrals)
+#ax[2].plot(times,expt)
+#ax[3].plot(times,auto[auto.size/2:])
+
+#plt.show()
+#n = len(y) # length of the signal
+#k = np.arange(n)
+#T = n/Fs
+#frq = k/T # two sides frequency range
+#frq = frq[range(n/2)] # one side frequency range
+#
+#Y = np.fft.fft(y)/n # fft computing and normalization
+#Y = Y[range(n/2)]
+#
+#fig, ax = plt.subplots(2, 1)
+#ax[0].plot(t,y)
+#ax[0].set_xlabel('Time')
+#ax[0].set_ylabel('Amplitude')
+#ax[1].plot(frq,abs(Y),'r') # plotting the spectrum
+#ax[1].set_xlabel('Freq (Hz)')
+#ax[1].set_ylabel('|Y(freq)|')
