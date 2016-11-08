@@ -37,6 +37,27 @@ frq = frq/2.998e08 # Frq -> Wavenumbers
 devs = freqs - np.mean(freqs)
 integrals = None
 
+### Should be able to do this loop cleverly with a closure, eg.
+#      def make_dfreq_adder(dfreq):
+#         num_to_add = igt.cumtrapz(dfreq)
+#         print num_to_add
+#         def integral_adder(integral):
+#            return integral + num_to_add
+#         return integral_adder
+### This creates an integral adder with a different value of dfreq each time
+### Then e.g.:
+#      int_sum=0
+#      for step in steps:
+#      adder = make_dfreq_adder(diffs[step:steps+ncorr])
+#      int_sum = adder(int_sum)
+#      print "int_sum = ",int_sum
+
+def integral_maker(freqdevs):
+   def integral_adder(integral,step,dt):
+      return integral + igt.cumtrapz(freqdevs,dx=dt,initial=0.5*freqdevs[step-1])
+   return integral_adder
+
+
 # Create FT variable
 for i,ival in enumerate(freqs):
    if integrals is None:
