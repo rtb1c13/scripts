@@ -10,11 +10,11 @@ import matplotlib.pyplot as plt
 import scipy.integrate as igt
 
 # Import raw field strengths
-data = np.genfromtxt("3VSY_Amoeba_Runs1-3.txt",usecols=(0))
+data = np.genfromtxt("3VSY_Amoeba_Runs1-3.txt",usecols=(0),max_rows=7500)
 
 # Convert to wavenumbers using quadratic function of Fried et al
 freqs = (-0.002915*data**2) + (0.9344*data) + 1735.3
-freqs = freqs*2.998e08 # Convert to Hz
+freqs = freqs*2.99792458e10 # Convert to Hz
 
 # Array of times
 Fs = 1e11 # Sampling rate s-1
@@ -28,14 +28,17 @@ n = len(freqs)
 k = np.arange(n)
 T = n/Fs
 frq = k/T # Set of frequencies
-frq = frq/2.998e08 # Frq -> Wavenumbers
+frq = frq/2.99792458e10 # Frq -> Wavenumbers
+dt = 1e-15
 
 # Calculate time averages
 #timeaves = np.zeros((len(freqs),len(freqs)))
 #integrals = np.zeros((len(freqs),len(freqs)))
 #expt = np.zeros((len(freqs),len(freqs)),dtype="complex64")
+print "avgfreq = %8.3f" % (np.mean(freqs)/2.99792458e10)
 devs = freqs - np.mean(freqs)
-integrals = None
+t_len = 500
+integrals = np.zeros(t_len,dtype='complex64')
 
 ### Should be able to do this loop cleverly with a closure, eg.
 #      def make_dfreq_adder(dfreq):
@@ -53,33 +56,49 @@ integrals = None
 #      print "int_sum = ",int_sum
 
 def integral_maker(freqdevs):
-   def integral_adder(integral,step,dt):
-      return integral + igt.cumtrapz(freqdevs,dx=dt,initial=0.5*freqdevs[step-1])
+   """Returns adder closed over given array of freqdevs"""
+   def integral_adder(integral,step,dt,t_len):
+      """Adds integral between step -> step+t_len to current value of integral"""
+#      _tmpintegral = np.empty(t_len,dtype='complex64')
+      _tmpintegral = igt.cumtrapz(freqdevs[step-1:step-1+t_len]*2*np.pi,dx=dt,initial=0.5*freqdevs[step-1]*dt*2*np.pi)
+      _tmpintegral[1:] += _tmpintegral[0] # Add initial value ('initial' kwarg doesn't add cumulatively to other cumulative integral vals)
+      _tmpintegral = np.exp(_tmpintegral*1j)
+      return integral + _tmpintegral
    return integral_adder
 
+add_step = integral_maker(devs)
+for step in range(1,len(devs)+1):
+   try:
+      integrals = add_step(integrals,step,dt,t_len)
+   except ValueError:
+      print """Stopping integration at step %d, not enough timesteps remain for complete integration (t_len = %d, total steps = %d)""" % (step,t_len,len(devs))
+      integrals = integrals/(step-1)
+      break
 
+print "I broke out"
+np.savetxt("cumtrapz_KSI",integrals)
 # Create FT variable
-for i,ival in enumerate(freqs):
-   if integrals is None:
-      integrals = igt.cumtrapz(devs,x=times)
-      expt = np.exp(1j*integrals)
-   else:
-      tmpintegrals = igt.cumtrapz(devs[i:],x=times[:-i])
-      tmpexpt = np.exp(1j*tmpintegrals)
-      tmpintegrals.resize((7499,))
-      tmpexpt.resize((7499,))
-      integrals = np.vstack((integrals,tmpintegrals))
-      expt = np.vstack((expt,tmpexpt))
+#for i,ival in enumerate(freqs):
+#   if integrals is None:
+#      integrals = igt.cumtrapz(devs,x=times)
+#      expt = np.exp(1j*integrals)
+#   else:
+#      tmpintegrals = igt.cumtrapz(devs[i:],x=times[:-i])
+#      tmpexpt = np.exp(1j*tmpintegrals)
+#      tmpintegrals.resize((7499,))
+#      tmpexpt.resize((7499,))
+#      integrals = np.vstack((integrals,tmpintegrals))
+#      expt = np.vstack((expt,tmpexpt))
 
 # Create fftvar that's average down columns (excluding any 0 values)
-fftvar = np.zeros(len(expt)-1,dtype="complex64") # Final row is all null, hence len(expt)-1
-for i in range(len(expt)-1):
-   fftvar[i] = np.mean(expt[:,i][0:len(expt)-1-i])
+#fftvar = np.zeros(len(expt)-1,dtype="complex64") # Final row is all null, hence len(expt)-1
+#for i in range(len(expt)-1):
+#   fftvar[i] = np.mean(expt[:,i][0:len(expt)-1-i])
 
 # Do fft
-fftout = np.fft.fft(fftvar)
-plt.plot(frq[1:],abs(fftout))
-plt.show()
+#fftout = np.fft.fft(fftvar)
+#plt.plot(frq[1:],abs(fftout))
+#plt.show()
 
       
 #   for y in range(x,len(freqs)):
