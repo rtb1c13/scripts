@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as igt
 import mdtraj as md
-import argparse
+import sys,argparse
 
 ### Argparser ###
 def parse():
