@@ -95,10 +95,10 @@ def calcfield(trajobj,dipobj):
    fieldproj1 = np.zeros(trajobj.traj.n_frames)
    fieldproj2 = np.zeros(trajobj.traj.n_frames)
    for i in range(0,trajobj.traj.n_frames):
-      fieldproj1 = np.dot(dipobj.field1[i], trajobj.unitvec[i])
-      fieldproj1 *= 299.79
-      fieldproj2 = np.dot(dipobj.field2[i], trajobj.unitvec[i])
-      fieldproj2 *= 299.79
+      fieldproj1[i] = np.dot(dipobj.field1[i], trajobj.unitvec[i])
+      fieldproj1[i] *= 299.79
+      fieldproj2[i] = np.dot(dipobj.field2[i], trajobj.unitvec[i])
+      fieldproj2[i] *= 299.79
    avefield = (fieldproj1+fieldproj2)/2
    return avefield
 
