@@ -89,9 +89,11 @@ class Anal_traj:
          self.leng[i] = np.linalg.norm(self.vec[i])
          self.unitvec[i] = self.vec[i] / self.leng[i]
 
-def calcfield(fn,trajobj,dipobj):
+def calcfield(trajobj,dipobj):
    """Calculates average of field projections in MV/cm 
       along unit vector at desired coordinates"""
+   fieldproj1 = np.zeros(trajobj.traj.n_frames)
+   fieldproj2 = np.zeros(trajobj.traj.n_frames)
    for i in range(0,trajobj.traj.n_frames):
       fieldproj1 = np.dot(dipobj.field1[i], trajobj.unitvec[i])
       fieldproj1 *= 299.79
@@ -120,7 +122,7 @@ uindxyz.getcoords(atmlst)
 uindxyz.vectors()
 uind.getdipls(atmlst)
 data = calcfield(uindxyz,uind)
-np.savetxt("0ns_fields.txt",data)
+np.savetxt("0ns_fields.txt",data,fmt="%8.3f")
 
 
 # Read in induced dipoles & ligand coordinates
