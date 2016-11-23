@@ -8,9 +8,126 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as igt
+import mdtraj as md
+
+### Argparser ###
+def parse():
+   parser = argparse.ArgumentParser()
+   parser.add_argument("-a","--atoms",help="Atom numbers for analysis (Max 4)",nargs='+',type=int,required=True)
+   parser.add_argument("-p","--polarise",help="Polarisabilities for atoms 1 & 2. Defaults to carbonyl C and O.",nargs=2,type=float,default=[1.3340,0.8370])
+   parser.add_argument("-t","--traj",help="Coordinate file (Tinker uindxyz, renumbered correctly)",type=str,required=True)
+   parser.add_argument("-dt","--diptraj",help="Dipoles file (Tinker uind, numbering unimportant)",type=str)
+
+   if len(sys.argv)==1:
+      parser.print_help()
+      sys.exit(1)
+
+   args = parser.parse_args()
+   return args
+
+### Class for atoms ###
+class Atom:
+   """Class to define properties for atom numbers
+      read in from command line arguments"""
+
+   def __init__(self,num):
+      """Defines index for atom num"""
+      self.idx = num-1
+
+   def polarise(self,num):
+      """Defines polarisability for atom num"""
+      listidx = args.atoms.index(num)
+      if listidx > 1:
+         return
+      else:
+         self.alpha = args.polarise[listidx]
+
+### Class for trajectory ###
+class Anal_traj:
+   """Class to define all the desired analyses for a
+      Tinker trajectory read in using MDTraj."""   
+
+   def __init__(self,arcname):
+      """Reads in Tinker trajectory arcname."""
+      self.traj = md.load_arc(arcname)
+
+   def getcoords(self,atmlst):
+      """Gets coordinates of atom indices
+         atm1 & atm2 given in a list. Units in Angstrom."""
+      self.coords1 = np.zeros((self.traj.n_frames,3))
+      self.coords2 = np.zeros((self.traj.n_frames,3))
+      for i in range(0,self.traj.n_frames):
+         self.coords1[i] = self.traj[i].xyz[0][atmlst[0].idx] *10
+         self.coords2[i] = self.traj[i].xyz[0][atmlst[1].idx] *10
+
+   def getdipls(self,atmlst):
+      """Gets dipoles of atom indices
+         atm1 & atm2 given in a list. Units in Debye."""
+      self.dipls1 = np.zeros((self.traj.n_frames,3))
+      self.dipls2 = np.zeros((self.traj.n_frames,3))
+      self.field1 = np.zeros((self.traj.n_frames,3))
+      self.field2 = np.zeros((self.traj.n_frames,3))
+      for i in range(0,self.traj.n_frames):
+         self.dipls1[i] = self.traj[i].xyz[0][atmlst[0].idx] *10
+         self.dipls2[i] = self.traj[i].xyz[0][atmlst[1].idx] *10
+         self.field1[i] = self.dipls1[i]/atmlst[0].alpha
+         self.field2[i] = self.dipls2[i]/atmlst[1].alpha
+
+   def vectors(self):
+      """Defines the interatomic vector, length and
+         unit vector along that path, assuming coordinates
+         for atoms are already defined. Returns three arrays:
+          1) X/Y/Z vector components
+          2) Interatomic vector length
+          3) X/Y/Z unit vector components."""
+      self.vec = np.zeros((self.traj.n_frames,3))
+      self.leng = np.zeros(self.traj.n_frames)
+      self.unitvec = np.zeros((self.traj.n_frames,3))
+      for i in range(0,self.traj.n_frames):
+         self.vec[i] = self.coords2[i] - self.coords1[i]
+         self.leng[i] = np.linalg.norm(self.vec[i])
+         self.unitvec[i] = self.vec[i] / self.leng[i]
+
+def calcfield(fn,trajobj,dipobj):
+   """Calculates average of field projections in MV/cm 
+      along unit vector at desired coordinates"""
+   for i in range(0,trajobj.traj.n_frames):
+      fieldproj1 = np.dot(dipobj.field1[i], trajobj.unitvec[i])
+      fieldproj1 *= 299.79
+      fieldproj2 = np.dot(dipobj.field2[i], trajobj.unitvec[i])
+      fieldproj2 *= 299.79
+   avefield = (fieldproj1+fieldproj2)/2
+   return avefield
+
+# Main...
+
+global args
+global gas
+args = parse()
+
+coordsname = args.traj
+dipname = args.diptraj
+uindxyz = Anal_traj(coordsname)
+uind = Anal_traj(dipname)
+atmlst=[]
+for i in args.atoms:
+   j = Atom(i)
+   j.polarise(i)
+   atmlst.append(j)
+print "Projecting along internuclear vector %d to %d" % (args.atoms[0],args.atoms[1])
+uindxyz.getcoords(atmlst)
+uindxyz.vectors()
+uind.getdipls(atmlst)
+data = calcfield(uindxyz,uind)
+np.savetxt("0ns_fields.txt",data)
+
+
+# Read in induced dipoles & ligand coordinates
+# For KSI, only 1 polgroup means only complex dipoles are needed (lig dipoles = 0)
+
 
 # Import raw field strengths
-data = np.genfromtxt("3VSY_Amoeba_Runs1-3.txt",usecols=(0),max_rows=7500)
+#data = np.genfromtxt("3VSY_Amoeba_Runs1-3.txt",usecols=(0),max_rows=7500)
 #data = np.genfromtxt("matlab_Ornstein-Uhlenbeck.txt",usecols=(0),max_rows=100000)
 
 # Convert to wavenumbers using quadratic function of Fried et al
@@ -20,7 +137,7 @@ freqs = freqs*2.99792458e10 # Convert to Hz
 
 # Array of times
 Fs = 1e15 # Sampling rate s-1
-Ts = 1.0/Fs # Time interval
+Ts = 2.0/Fs # Time interval
 times = np.arange(0,75e-13,Ts) # time vector
 #times = times/100 # snapshots to ns
 #times = times*1e-09 # ns to s
@@ -31,7 +148,7 @@ k = np.arange(n)
 T = n/Fs
 frq = k/T # Set of frequencies
 frq = frq/2.99792458e10 # Frq -> Wavenumbers
-dt = 1e-15
+dt = 2e-15
 
 # Calculate time averages
 #timeaves = np.zeros((len(freqs),len(freqs)))
@@ -40,7 +157,7 @@ dt = 1e-15
 avgfrq_wn = np.mean(freqs)/2.99792458e10
 print "avgfreq = %8.3f" % avgfrq_wn
 devs = freqs - np.mean(freqs)
-t_len = 512
+t_len = 8192
 integrals = np.zeros(t_len,dtype='complex64')
 
 ### Should be able to do this loop cleverly with a closure, eg.
@@ -109,6 +226,9 @@ reordered = np.concatenate((negfft,posfft))
 reorderedfrq = np.concatenate((negfrq[::-1],posfrq)) + avgfrq_wn# Reversed negfrq
 plt.plot(reorderedfrq,abs(reordered))
 plt.xlim((avgfrq_wn-100,avgfrq_wn+100))
+plt.xlabel('Wavenumber (cm-1)')
+plt.title("IR lineshape test - KSI fields, 2fs spacing, Run_1 0ns-0.5ns")
+plt.ylabel('Intensity (arbitrary units)')
 plt.show()
 
       
