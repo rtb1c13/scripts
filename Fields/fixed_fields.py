@@ -5,6 +5,10 @@
 # electric field at a desired site
 # Requirements: AmberTools15 python APIs for sander & parmed, numpy
 
+# ***NB*** currently set up for gas phase complex (pmeflag=False)
+# Change this if you want to run e.g. arotein in PBC as the complex
+
+
 #Usage: xxxxxxxxxxxxx
 
 import sander
@@ -18,7 +22,7 @@ def parse():
    parser.add_argument("-p","--parm",help="Path to Amber parameter file for analysis",type=str,required=True)
    parser.add_argument("-c","--coords",help="Path to NetCDF trajectory file for analysis",type=str,required=True)
    parser.add_argument("-a","--atoms",help="Atom numbers for analysis (Max 4)",nargs='+',type=int,required=True)
-   parser.add_argument("-m","--mask",help="Mask (in Amber atom mask format) for atoms to discharge whan calculating electrostatic forces (i.e. the 'ligand')",type=str,required=True)
+   parser.add_argument("-m","--mask",help="Mask (in Amber atom mask format) for atoms not to discharge whan calculating electrostatic forces (i.e. the 'ligand')",type=str,required=True)
 
    if len(sys.argv)==1:
       parser.print_help()
@@ -60,7 +64,10 @@ class Prmfile:
          atmmask to 0 in a provided parmtop object.
          Returns new, discharged, prmtop"""
 
-      invmask = "!" + atmmask
+      if atmmask=="":
+         invmask = "*"
+      else:
+         invmask = "!" + atmmask
 #      print "invmask
       act = ptools.change(self.discharged, 'charge', invmask, 0.000)
       act.execute()

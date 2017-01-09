@@ -300,6 +300,8 @@ def standard_field():
    field = analyze_dipl_detailed(args.solvprefix,arc,atmlst,gas)
    writefield(("field_at_atom_%i.txt" % args.atoms[0]),arc,field[0])
    writefield(("field_at_atom_%i.txt" % args.atoms[1]),arc,field[1])
+   writefield_components(("field_components_at_atom_%i.txt" % args.atoms[0]),arc,field[0])
+   writefield_components(("field_components_at_atom_%i.txt" % args.atoms[1]),arc,field[1])
 
 def env_field():
    """Analyses field at two atoms Correction is made for
