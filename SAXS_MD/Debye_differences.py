@@ -11,7 +11,6 @@
 # Requirements: MDAnalysis, numpy, matplotlib
 # netcdf4-python for netcdf support (dependency of mdanalysis)
 
-import MDAnalysis.coordinates.TRJ as readamber 
 import MDAnalysis.analysis.distances as distanal
 
 from MDAnalysis import Universe
@@ -27,7 +26,8 @@ def parse():
    parser.add_argument("-p","--parm",help="Parameter/topology file for desired structure",type=str,required=True)
    parser.add_argument("-t","--traj",help="Coordinate file for desired structure",type=str,required=True)
    parser.add_argument("-ff","--formfactor",help="Formfactor file for desired structure. Note that formfactors for Hydrogens should be included in their attached heavy atoms. This script does not currently support explicit hydrogens",type=str,required=True)
-   parser.add_argument("-f","--frames",help="Frames to analyse. If you supply one frame here, a SAXS profile will be generated. Two frames will generate a difference plot. Three frames will be used as the start, stop & stride values through a trajectory, and generate a profile for each one (WARNING, TIME CONSUMING!). Defaults to calculating the profile of the first frame",nargs='+',type=int,default=1)
+   parser.add_argument("-f","--frames",help="Frames to analyse. If you supply one frame here, a SAXS profile will be generated. Two frames will generate a difference plot. Three frames will be used as the start, stop & stride values through a trajectory, and generate a profile for each one (WARNING, TIME CONSUMING!). Defaults to calculating the profile of the first frame",nargs='+',type=int,default=[1])
+   parser.add_argument("-r","--ref",help="Optional reference structure. If you supply this, a difference profile will be generated between the reference structure and every frame specified with the '-f' option. Expects a file in PDB format.",type=str,default=None)
    parser.add_argument("-q","--qvalues",help="List of Q-values for analysis. Defaults to 0.1",nargs='*',type=float,default=[0.1])
    parser.add_argument("-s","--select",help="Selection string for atoms to analyse from trajectory (in CHARMM/VMD format). Formfactor file should be pre-processed to only include these atoms.",type=str,default='protein and not name H*')
  
@@ -249,17 +249,56 @@ def plot_diffmatrix(ref,probe,q=0.1):
    plt.gca().set_yticks([i-1 for i in yticklabs])
    plt.gca().set_xticklabels(xticklabs)
    plt.gca().set_yticklabels(yticklabs)
-   plt.suptitle('Intensity difference matrix, frames %s-%s Q=%s' % (ref.label,probe.label,q),y=0.98,fontsize=14)
-   plt.title('Atoms selected = "%s"' % args.select,fontsize=10)
-   plt.colorbar()
+   plt.suptitle('Intensity difference matrix, frames %s-%s Q=%s' % (ref.label,probe.label,q),y=0.98,fontsize=12)
+   plt.title('Atoms selected = "%s"' % args.select,fontsize=8)
+   plt.colorbar(label='Intensity difference (arbitrary units)')
+   plt.xlabel('Interaction number')
+   plt.ylabel('Interaction number')
    plt.savefig('Diffs_%s-%s_%s.png' % (ref.label,probe.label,q),bbox_inches='tight',dpi=300)
-      
 
-############ main below here ################
-def main():
-   global args
-   args = parse()
-   u = setup_universe(args.parm,args.traj)
+### Main functions for fitting with & without reference structure ###
+def reference_diffs(u,refu):
+   """Plots difference matrices between frames and given
+      reference structure."""
+   # Reference frame analysis
+   refconf = Conformer(refu,atoms=args.select)
+   refconf.label = "Reference %s" % args.ref
+   refconf.get_distmatrix()
+   for q in args.qvalues:
+      Q1 = QPoint(q)
+      Q1.get_ff(args.formfactor,refconf.atms)
+      refconf.intensities[q] = Q1.calc_intensities(refconf.distmatx)
+   # Now trajectory frames
+   if len(args.frames) <= 2:
+      conflist = []
+      for conf in args.frames:
+         currconf = Conformer(u,frame=conf-1,atoms=args.select) 
+         currconf.get_distmatrix()
+         for q in args.qvalues:
+            Q1 = QPoint(q)
+            Q1.get_ff(args.formfactor,currconf.atms)
+            currconf.intensities[q] = Q1.calc_intensities(currconf.distmatx)
+         conflist.append(currconf)
+   else:
+      conflist = []
+      trajslice = get_trajslice(u,args.frames[0],args.frames[1],args.frames[2])
+      for ts in trajslice:
+         currconf = Conformer(u,frame=ts.frame-1,atoms=args.select)
+         currconf.get_distmatrix()
+         for q in args.qvalues:
+            Q1 = QPoint(q)
+            Q1.get_ff(args.formfactor,currconf.atms)
+            currconf.intensities[q] = Q1.calc_intensities(currconf.distmatx)
+         conflist.append(currconf)
+   # Plot
+   for trajconf in conflist:
+      for q in args.qvalues:
+         plot_diffmatrix(trajconf,refconf,q)
+
+def trajonly_diffs(u):
+   """Plots either a single SAXS profile, a difference plot,
+      or a series of profiles for given trajectory frames.
+      Requires MDAnalysis universe as input."""
    if len(args.frames) == 1:                   # Profile only
       conf1 = Conformer(u,frame=args.frames[0]-1,atoms=args.select)
       conf1.get_distmatrix()
@@ -282,5 +321,20 @@ def main():
          conf1 = Conformer(u,frame=ts.frame-1,atoms=args.select)
          conf1.get_distmatrix()
          write_profile(conf1)
+ 
+
+############ main below here ################
+def main():
+   global args
+   args = parse()
+   traj_univ = setup_universe(args.parm,args.traj,fformat='NCDF')
+   use_ref = args.ref is not None
+   if use_ref:
+      ref_univ = setup_universe(args.parm,args.ref,fformat='PDB')
+      reference_diffs(traj_univ,ref_univ)
+   else:
+      trajonly_diffs(traj_univ)
+
 ###############################################################      
-main()      
+if __name__ == "__main__":
+   main()      
