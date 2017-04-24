@@ -184,7 +184,7 @@ if args.gas:
    uind.field1 -= gasfield[0]
    uind.field2 -= gasfield[1]
 data = calcfield(uindxyz,uind)
-np.savetxt("10ns_fields.txt",data,fmt="%8.3f")
+np.savetxt("25ns_fields.txt",data,fmt="%8.3f")
 
 
 # Read in induced dipoles & ligand coordinates
@@ -193,12 +193,12 @@ np.savetxt("10ns_fields.txt",data,fmt="%8.3f")
 
 # Convert to wavenumbers using quadratic function of Fried et al
 # from supp text S2, fig S4F
-#freqs = (-0.00125*data**2) + (0.610*data) + 1688.2
+freqs = (-0.00125*data**2) + (0.610*data) + 1688.2
 # SOLVENTS: Convert to wavenumbers using linear (R2 = 0.98) function of Fried & Wang
 # from Fig 1a, JPCB 2013
-freqs = (0.484*data) + 1703.6
+#freqs = (0.484*data) + 1703.6
 #freqs = data
-np.savetxt("10ns_wavenums.txt",freqs,fmt="%10.6f")
+np.savetxt("25ns_wavenums.txt",freqs,fmt="%10.6f")
 freqs = freqs*2.99792458e10 # Convert to Hz
 
 
@@ -245,7 +245,7 @@ for step in range(1,len(devs)+1):
       integrals = integrals/(step-1)
       break
 
-np.savetxt("integrals_10ns.txt",zip(integrals.real,integrals.imag))
+np.savetxt("integrals_25ns.txt",zip(integrals.real,integrals.imag))
 
 # Do fft with 16*padding
 fftout = np.fft.fft(integrals,n=(2**4)*t_len)
@@ -261,11 +261,11 @@ plt.plot(reorderedfrq,reordered.real)
 #plt.plot(reorderedfrq,abs(reordered))
 plt.xlim((avgfrq_wn-100,avgfrq_wn+100))
 plt.xlabel('Wavenumber (cm-1)')
-plt.title("IR lineshape test - Acetonitrile fields, 2fs spacing, Run_1 10ns-11ns")
+plt.title("IR lineshape test - KSI fields, 2fs spacing, Run_1 25ns-26ns")
 plt.ylabel('Intensity (arbitrary units)')
-plt.savefig('10ns_lineshape.png
-np.savetxt('10ns_lineshape.dat',zip(reorderedfrq,reordered.real))
-#np.savetxt('0ns_lineshape_abs.dat',zip(reorderedfrq,abs(reordered)))
+plt.savefig('25ns_lineshape.png')
+np.savetxt('25ns_lineshape.dat',zip(reorderedfrq,reordered.real))
+#np.savetxt('25ns_lineshape_abs.dat',zip(reorderedfrq,abs(reordered)))
 
 
       

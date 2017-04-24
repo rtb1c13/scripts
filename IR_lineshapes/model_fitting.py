@@ -23,8 +23,8 @@ def parse():
    parser.add_argument("-i","--inputs",help="Identifiers for input integral and frequency files. Integral files will be loaded as 'integrals_[name].txt, freqs as [name]_wavenums.txt",nargs='+',type=str,required=True)
    parser.add_argument("-m","--models",help="Models for each peak to be fitted. Defaults to a single Gaussian model",nargs='+',type=str,default=['gaussian'])
    parser.add_argument("-p","--prefixes",help="Prefix used for each peak/model",nargs='+',type=str)
-   parser.add_argument("-c","--centres",help="Initial guess for centrepoints of each peak/model",nargs='+',type=float)
-   parser.add_argument("-s","--sigmas",help="Initial guess for sigmas of each peak/model",nargs='+',type=float)
+   parser.add_argument("-c","--centres",help="Initial guess for centrepoints of each peak/model. Defaults to 1700 cm-1.",nargs='+',type=float,default=[1700.0])
+   parser.add_argument("-s","--sigmas",help="Initial guess for sigmas of each peak/model. Defaults to 5.0 cm-1",nargs='+',type=float,default=[5.0])
    parser.add_argument("-o","--output",help="Filename of fitted model image to output. Defaults to 'fitted_model.png'",type=str)
 
    if len(sys.argv)==1:
@@ -92,7 +92,7 @@ def combine_fits(data,models,params=None):
     multi = Multifit(*models)
     if params:
         for model in models:
-            multi.init_params(prefix=model._mod.prefix,center=params[model._mod.prefix+'center'], sigma=params[model._mod.prefix+'sigma'])
+            multi.init_params(prefix=model._mod.prefix,center=params[model._mod.prefix+'center'], sigma=params[model._mod.prefix+'sigma'],amplitude=1500.0)
     else:
         for model in models:
             multi.init_params(prefix=model._mod.prefix)
@@ -147,12 +147,13 @@ def plot_fit(model, title=None, plot_init=False, annotate=True, fn="fitted_model
     fig.ax.set_xlim((offset-100,offset+100))
     fig.savefig(fn,dpi=300)
     
-
-
-paramdict = {'lor1_center': 1675.0,
-             'lor1_sigma': 10.0,
-             'gau2_center': 1660.0,
-             'gau2_sigma': 20.0}
+# Set paramdict
+def set_params(cents, sigs, prefs=''):
+    prefcents, prefsigs = [ i + 'center' for i in prefs ], [ i + 'sigma' for i in prefs ]
+    paramdict = {}
+    paramdict.update(zip(prefcents,cents))
+    paramdict.update(zip(prefsigs,sigs))
+    return paramdict
 
 
 # Write log (fit_report)
@@ -168,9 +169,13 @@ if __name__ == "__main__":
     xs, ys = calc_fft(integrals, offset=np.mean(freqs))
     tot_data = np.vstack((xs,ys))
     # Below here needs to be updated with switches based on argparse
-    fit1 = single_fit(tot_data,prefix='lor1_',fittype='lorentzian')
-    fit2 = single_fit(tot_data,prefix='gau2_')
-    mm = combine_fits(tot_data,(fit1,fit2),params=paramdict)
+    if inp_args.prefixes is not None:
+        fits = [ single_fit(tot_data, prefix=z[0], fittype=z[1]) for z in zip(inp_args.prefixes,inp_args.models) ]
+        paramdict = set_params(inp_args.centres, inp_args.sigmas, inp_args.prefixes)
+    else:
+        fits = [ single_fit(tot_data, fittype=m) for m in inp_args.models ]
+        paramdict = set_params(inp_args.centres, inp_args.sigmas)
+    mm = combine_fits(tot_data, fits, params=paramdict)
     write_log(mm)
     plot_fit(mm,offset=np.mean(freqs))
 # Add function to write out values of composite plot, and/or y-max and FWHM, here:
