@@ -169,7 +169,7 @@ class Anal_traj:
          with sander.setup(parmstr,coord,box=box,mm_options=inp): #Pass a string, else a temp parmfile is created that fills up tmp directory!
             ene,frc = sander.energy_forces(as_numpy=False) # pysander __init__ bug/inconsistency, can't use as_numpy!
          frc = np.asarray(frc)
-         frc = np.reshape(frc,((len(frc)/3.),3))
+         frc = np.reshape(frc,((len(frc)/3),3))
          frcslice = frc[indices]
          # Add units for forces: kcal mol-1 A-1
          frcslice = frcslice * u.kilocalorie / (u.mole * u.angstroms)
