@@ -5,11 +5,12 @@
 # 
 # Author: Richard Bradshaw, R.T.Bradshaw@soton.ac.uk
 
-# Requirements: lmfit, argparse, numpy, matplotlib, lmcurvefit module
+# Requirements: lmfit, argparse, numpy, matplotlib, lmcurvefit module, smooth module
 
 from __future__ import print_function
 
 from lmcurvefit import *
+from smooth import *
 import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
@@ -26,6 +27,8 @@ def parse():
    parser.add_argument("-c","--centres",help="Initial guess for centrepoints of each peak/model. Defaults to 1700 cm-1.",nargs='+',type=float,default=[1700.0])
    parser.add_argument("-s","--sigmas",help="Initial guess for sigmas of each peak/model. Defaults to 5.0 cm-1",nargs='+',type=float,default=[5.0])
    parser.add_argument("-o","--output",help="Filename of fitted model image to output. Defaults to 'fitted_model.png'",type=str)
+   parser.add_argument("-sm","--smoothing",help="Flag to perform cubic spline smothing of input data prior to fitting. Defaults to false.",dest='smflag', action='store_true')
+   parser.set_defaults(smflag=False)
 
    if len(sys.argv)==1:
       parser.print_help()
@@ -71,9 +74,24 @@ def calc_fft(integrals, offset=0, dt=2e-15, t_len=2**12):
     return np.concatenate((negfrq[::-1],posfrq)) + offset, np.concatenate((negfft,posfft)).real
 
 
-# Choose - do single model fit or multi model fit?
+# Smooth data
 
-
+def smooth_data(data, spline_kwargs=None, plot_kwargs=None):
+    """Smooths y-values of data with a 1D smoothed spline fit.
+       Usage: smooth_data(data, [spline_kwargs, plot_kwargs])
+       Returns: smoothed dataset and matplotlib figure of smoothing"""
+    
+    k = Smoothed(data)
+    if (spline_kwargs):
+        k.do_smooth(**spline_kwargs)
+    else:
+        k.do_smooth()
+    if (plot_kwargs):
+        outfig = k.plot(**plot_kwargs)
+    else:
+        outfig = k.plot()
+    data[1] = k.smoothed_ys
+    return data, outfig
 
 # Do fit
 
@@ -168,6 +186,10 @@ if __name__ == "__main__":
     integrals, freqs = read_files(inp_args.inputs)
     xs, ys = calc_fft(integrals, offset=np.mean(freqs))
     tot_data = np.vstack((xs,ys))
+    np.savetxt("combined_lineshape.txt", zip(xs,ys))
+    if inp_args.smflag:
+        tot_data, smoothfig = smooth_data(tot_data)
+        smoothfig.savefig("Smoothed_average_lineshape.png")
     # Below here needs to be updated with switches based on argparse
     if inp_args.prefixes is not None:
         fits = [ single_fit(tot_data, prefix=z[0], fittype=z[1]) for z in zip(inp_args.prefixes,inp_args.models) ]
