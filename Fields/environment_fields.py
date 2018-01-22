@@ -9,7 +9,7 @@
 
 import mdtraj as md
 import numpy as np
-import sys,argparse
+import sys, argparse, glob
 from subprocess import call
 
 
@@ -186,7 +186,8 @@ def analyze_dipl(prefix,trajobj):
    field = np.zeros((trajobj.traj.n_frames,3))
    for i in range(0,trajobj.traj.n_frames):
       modxyz=prefix + "_new.%03d" % int(i+1)
-      call('analyze %s -k test.key m &> analout.txt ' % modxyz,shell=True)
+      with open('analout.txt','w') as fout:
+         call('analyze %s -k test.key m ' % modxyz, stderr=fout, stdout=fout, shell=True)
       f = open("analout.txt",'r')
       for line in f.readlines():
          if line.startswith(" Dipole X,Y,Z-Components"):
@@ -210,12 +211,15 @@ def analyze_dipl_detailed(prefix,trajobj,atmlst,gas):
    alpha2=atmlst[1].alpha
    # 3d array for field
    field = np.zeros((2,trajobj.traj.n_frames,3))
+   filelist = glob.glob(prefix+".*")
+   filelist.sort(key=lambda x: int(x.split(prefix+".")[1])) # expects integer suffix
    for i in range(0,trajobj.traj.n_frames):
-      xyz=prefix + ".%03d" % int(i+1)
-      if gas is True:
-         call('analyze %s -k testgas.key d &> analout.txt ' % xyz,shell=True)
-      else:
-         call('analyze %s -k test.key d &> analout.txt ' % xyz,shell=True)
+      xyz=filelist[i]
+      with open("analout.txt", 'w') as fout:
+         if gas is True:
+            call('analyze %s -k testgas.key d ' % xyz, stdout=fout, stderr=fout, shell=True)
+         else:
+            call('analyze %s -k test.key d ' % xyz, stdout=fout, stderr=fout, shell=True)
       call('grep -A%s "Induced Dipole Moments (Debyes) :" analout.txt > dipls.txt ' % (trajobj.traj.n_atoms+3),shell=True)
       dipls = np.loadtxt("dipls.txt",skiprows=4,usecols=(1,2,3))
       field[0][i][0] = dipls[atm1][0]
