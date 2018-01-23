@@ -212,7 +212,15 @@ def analyze_dipl_detailed(prefix,trajobj,atmlst,gas):
    # 3d array for field
    field = np.zeros((2,trajobj.traj.n_frames,3))
    filelist = glob.glob(prefix+".*")
-   filelist.sort(key=lambda x: int(x.split(prefix+".")[1])) # expects integer suffix
+   try:
+      filelist.remove(prefix+".arc") # To avoid issues in the suffix-based sort
+   except ValueError:
+      pass
+   try:
+      filelist.sort(key=lambda x: int(x.split(prefix+".")[1])) # expects integer suffix
+   except ValueError:
+      print "Error in trying to sort snapshot files with prefix %s\nYou've probably got a conflicting filename." % prefix
+      sys.exit(1)
    for i in range(0,trajobj.traj.n_frames):
       xyz=filelist[i]
       with open("analout.txt", 'w') as fout:
