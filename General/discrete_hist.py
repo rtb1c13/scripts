@@ -15,7 +15,7 @@ plt.rc('lines', linewidth=1.5, markersize=4)
 plt.rc('axes', prop_cycle=(cycler('color', ['k','b','r','orange','c','m','y','g'])), # Color cycle defaults to black
        labelweight='heavy', labelsize=22, titlesize=22) # Default fontsizes for printing
 plt.rc('axes.spines', top=False, right=False) # Switch off top/right axes
-plt.rc('legend', fontsize=16) # Default fontsizes for printing
+plt.rc('legend', fontsize=12) # Default fontsizes for printing
 plt.rc('xtick', labelsize=16) # Default fontsizes for printing
 plt.rc('ytick', labelsize=16) # Default fontsizes for printing
 plt.rc('figure', figsize=(11,8.5), titlesize=22, titleweight='heavy') # Default fontsizes for printing
@@ -89,14 +89,14 @@ def overlay_hist_poisson(xs, hist_ys, poisson_ys, name, values):
     fig = plt.figure()
     ax = fig.gca()
     ax.set_title("Data overlaid with Poisson distribution")
-    ax.set_xticks(xs)
+#    ax.set_xticks(xs)
     ax.set_ylabel("Probability density")
     ax.set_xlabel("Counts")
     ax.plot(xs, hist_ys, label="Histogrammed data, mean = %5.2f" % np.mean(values) )
     ax.plot(xs, poisson_ys, label="Poisson distribution", linestyle='-')
-    plt.legend()
+    plt.legend(loc="upper left")
     plt.tight_layout()
-    plt.savefig("Histogram+Poisson_overlay.png", dpi=300)
+    plt.savefig("Histogram+Poisson_overlay_%s.png" % name, dpi=300)
 
 if __name__ == "__main__":
     data = combine_files(args.files)
