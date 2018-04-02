@@ -64,6 +64,20 @@ def poisson_pmf(values, xs):
     p_obj = stats.poisson(xbar)
     return p_obj.pmf(xs)
 
+def norm_pdf(values, xs):
+    """Generate an idealised probability density function
+       for a normal distribution centered at the mean of
+       given values, and with width std. dev. of the given
+       values. The PDF is evaluated at the x-points provided.
+
+       Usage: norm_pdf(values, xs)
+       Returns: Array of probability densities at points in xs"""
+
+    xbar = np.mean(values)
+    sdev = np.std(values)
+    n_obj = stats.norm(loc=xbar, scale=std)
+    return n_obj.pdf(xs)
+
 def desc_stats(values, name):
     """Writes out some descriptive statistics of the values
        read in. Prepends output with 'name'"""
@@ -73,7 +87,7 @@ def desc_stats(values, name):
     error = stats.sem(values)
     
     with open("stats_%s.txt" % name,'a') as f:
-        f.write("Description    Mean   Variance   Std. Dev.  Std. Err.\n")
+        f.write("#Description    Mean   Variance   Std. Dev.  Std. Err.\n")
         f.write("%s %7.3f  %7.3f  %7.3f  %7.3f\n" \
                 % (name.ljust(len(name)+8), xbar, var, sigma, error))
 
@@ -83,7 +97,7 @@ def overlay_hist_poisson(xs, hist_ys, poisson_ys, name, values):
        of the data are also printed to the descriptive statistics file."""
 
     with open("stats_%s.txt" % name,'a') as f:
-        f.write("Description    Skew (+ve = left skewed)   Kurtosis (+ve = longer-tailed)\n")
+        f.write("#Description    Skew (+ve = left skewed)   Kurtosis (+ve = longer-tailed)\n")
         f.write("%s %7.3f                 %7.3f\n" \
                 % (name.ljust(len(name)+8), stats.skew(values), stats.kurtosis(values)))
     fig = plt.figure()
@@ -98,6 +112,25 @@ def overlay_hist_poisson(xs, hist_ys, poisson_ys, name, values):
     plt.tight_layout()
     plt.savefig("Histogram+Poisson_overlay_%s.png" % name, dpi=300)
 
+def overlay_hist_normal(xs, hist_ys, norm_ys, name, values):
+    """Plot an overlay of histogrammed data and an idealised
+       Poisson distribution of the same mean. Skew and kurtosis
+       of the data are also printed to the descriptive statistics file."""
+
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.set_title("Data overlaid with continuous normal distribution")
+#    ax.set_xticks(xs)
+    ax.set_ylabel("Probability density")
+    ax.set_xlabel("Counts")
+    ax.plot(xs, hist_ys, label="Histogrammed data, mean = %5.2f" % np.mean(values) )
+    ax.plot(xs, poisson_ys, label="Normal distribution", linestyle='-')
+    plt.legend(loc="upper left")
+    plt.tight_layout()
+    plt.savefig("Histogram+normal_overlay_%s.png" % name, dpi=300)
+
+
+### Main below here ###
 if __name__ == "__main__":
     data = combine_files(args.files)
     try:
@@ -105,10 +138,14 @@ if __name__ == "__main__":
         hist_ys, xs, _ = histogram(data)
         poisson_ys = poisson_pmf(data, xs)
         overlay_hist_poisson(xs, hist_ys, poisson_ys, args.name, data)
+        norm_ys = norm_pdf(data, xs)
+        overlay_hist_normal(xs, hist_ys, norm_ys, args.name, data)
     except AttributeError:
         desc_stats(data, "File_1")
         hist_ys, xs, _ = histogram(data)
         poisson_ys = poisson_pmf(data, xs)
         overlay_hist_poisson(xs, hist_ys, poisson_ys, "File_1", data)
+        norm_ys = norm_pdf(data, xs)
+        overlay_hist_normal(xs, hist_ys, norm_ys, "File_1", data)
 
 
