@@ -46,8 +46,8 @@ def histogram(values):
                 Array of matplotlib patch objects"""
     minval, maxval = np.min(values), np.max(values)
     dens, bins, patches = plt.hist(values,\
-                               bins=np.arange(minval-5, maxval+6, 1),\
-                               density=True)
+                                   bins=np.arange(minval-5, maxval+6, 1),\
+                                   density=True)
     return dens, bins[:-1], patches # Last bin is closed-ended 
 
 def poisson_pmf(values, xs):
@@ -75,7 +75,7 @@ def norm_pdf(values, xs):
 
     xbar = np.mean(values)
     sdev = np.std(values)
-    n_obj = stats.norm(loc=xbar, scale=std)
+    n_obj = stats.norm(loc=xbar, scale=sdev)
     return n_obj.pdf(xs)
 
 def desc_stats(values, name):
@@ -114,8 +114,7 @@ def overlay_hist_poisson(xs, hist_ys, poisson_ys, name, values):
 
 def overlay_hist_normal(xs, hist_ys, norm_ys, name, values):
     """Plot an overlay of histogrammed data and an idealised
-       Poisson distribution of the same mean. Skew and kurtosis
-       of the data are also printed to the descriptive statistics file."""
+       normal distribution of the same mean & std. dev."""
 
     fig = plt.figure()
     ax = fig.gca()
@@ -124,7 +123,7 @@ def overlay_hist_normal(xs, hist_ys, norm_ys, name, values):
     ax.set_ylabel("Probability density")
     ax.set_xlabel("Counts")
     ax.plot(xs, hist_ys, label="Histogrammed data, mean = %5.2f" % np.mean(values) )
-    ax.plot(xs, poisson_ys, label="Normal distribution", linestyle='-')
+    ax.plot(xs, norm_ys, label="Normal distribution", linestyle='-')
     plt.legend(loc="upper left")
     plt.tight_layout()
     plt.savefig("Histogram+normal_overlay_%s.png" % name, dpi=300)
@@ -136,16 +135,16 @@ if __name__ == "__main__":
     try:
         desc_stats(data, args.name)
         hist_ys, xs, _ = histogram(data)
-        poisson_ys = poisson_pmf(data, xs)
-        overlay_hist_poisson(xs, hist_ys, poisson_ys, args.name, data)
-        norm_ys = norm_pdf(data, xs)
-        overlay_hist_normal(xs, hist_ys, norm_ys, args.name, data)
+        ys1 = poisson_pmf(data, xs)
+        overlay_hist_poisson(xs, hist_ys, ys1, args.name, data)
+        ys2 = norm_pdf(data, xs)
+        overlay_hist_normal(xs, hist_ys, ys2, args.name, data)
     except AttributeError:
         desc_stats(data, "File_1")
         hist_ys, xs, _ = histogram(data)
-        poisson_ys = poisson_pmf(data, xs)
-        overlay_hist_poisson(xs, hist_ys, poisson_ys, "File_1", data)
-        norm_ys = norm_pdf(data, xs)
-        overlay_hist_normal(xs, hist_ys, norm_ys, "File_1", data)
+        ys1 = poisson_pmf(data, xs)
+        overlay_hist_poisson(xs, hist_ys, ys1, "File_1", data)
+        ys2 = norm_pdf(data, xs)
+        overlay_hist_normal(xs, hist_ys, ys2, "File_1", data)
 
 
