@@ -21,11 +21,11 @@ relatives = { 'A' : 113., 'R' : 241., 'N' : 158., 'D' : 151.,\
               None : 1.} # For lipids without a code
 
 # Both parmfiles must already be available. Won't be created here.
-orig_trajn = '../2us_full_run2.dcd' 
-orig_parmn = '../../3tt3_y268a_full.psf'
+orig_trajn = '../2us_full_run1.dcd' 
+orig_parmn = '../../leut-f108y-apo1_full.psf'
 
-trimmed_trajn = '3TT3_100lipids_tmp.dcd'
-trimmed_parmn = '../../3TT3_100_lipids.psf'
+trimmed_trajn = '3TT1_100lipids_tmp.dcd'
+trimmed_parmn = '../../3TT1_100_lipids.psf'
 
 #frames = range(0,10) # None = all frames
 #Set up outputs
@@ -36,20 +36,15 @@ trimmed_parmn = '../../3TT3_100_lipids.psf'
 
 # First/last residue = first protein, last lipid (1-indexed)
 first_protein = 1
-last_protein = 507
-first_lipid = 508
-last_lipid = 755
-all_prot_sasas = np.empty((0,507)) # length of protein residues
-all_rel_prot_sasas = np.empty((0,507)) # length of protein residues
+last_protein = 513
+first_lipid = 514
+last_lipid = 745
+all_prot_sasas = np.empty((0,513)) # length of protein residues
+all_rel_prot_sasas = np.empty((0,513)) # length of protein residues
 # Chunk trajectories
 for endframe in range(1000,21000,1000):
     startframe = endframe - 1000
     frames = range(startframe,endframe)
-    # First/last residue = first protein, last lipid (1-indexed)
-    first_protein = 1
-    last_protein = 507
-    first_lipid = 508
-    last_lipid = 755
 
     # Read & trim to closest 100 with pytraj
     pt_traj = pt.load(orig_trajn, top=orig_parmn, mask=':%d-%d,%d-%d' \
