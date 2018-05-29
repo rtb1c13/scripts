@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script for various simple argument parsing examples
-# For this example, first line should be the path to a config file
+# For this example, first argument should be the path to a config file
 # that defines variables $foofromfile and $barfromfile
 
 # Positional arguments
