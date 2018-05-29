@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # A (very) simple bash logger
+# Run as 'bash_logger.x 2> logger_errfile.txt' to redirect stderr to file and catch error messages
 
 DATETIME="date"
 LOGFILE="logger_logfile.txt"
