@@ -33,4 +33,24 @@ for {set frame 0} {$frame < $num_steps} {incr frame} {
     }
 close $out2
 
+# Residue Ca distances to measure occlusion, as per Toni
+# Dists = Y108-L25, Y108-F253, D404-R30
+set out3 [open "Ca-Ca_distances_measuring_occlusion.dat" a];
+puts $out3 "#Y108-L25 Y108-F253 D404-R30"
+
+set tyr [[atomselect top "protein and resid 108 and name CA"] list]
+set leu [[atomselect top "protein and resid 25 and name CA"] list]
+set phe [[atomselect top "protein and resid 253 and name CA"] list]
+set asp [[atomselect top "protein and resid 404 and name CA"] list]
+set arg [[atomselect top "protein and resid 30 and name CA"] list]
+
+set num_steps [molinfo top get numframes]
+for {set frame 0} {$frame < $num_steps} {incr frame} {
+    set dists [format "%.5f" [measure bond "$tyr $leu" frame $frame]]
+    lappend dists [format "%.5f" [measure bond "$tyr $phe" frame $frame]]
+    lappend dists [format "%.5f" [measure bond "$asp $arg" frame $frame]]
+    puts $out3 $dists
+}
+close $out3
+
 exit
