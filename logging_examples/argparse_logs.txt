@@ -1,0 +1,4 @@
+Command-line arguments: ./python_argparse.py -s 1 2 3 -n 5
+Output : ['1', '2', '3', '1', '2', '3', '1', '2', '3', '1', '2', '3', '1', '2', '3']
+Command-line arguments: ./python_argparse.py @argparse_config.in
+Output : ['1', '2', '3', '1', '2', '3', '1', '2', '3', '1', '2', '3', '1', '2', '3']

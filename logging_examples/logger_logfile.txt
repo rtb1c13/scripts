@@ -1,0 +1,4 @@
+Mon 28 May 2018 16:28:54 EDT : Command 1 running
+Mon 28 May 2018 16:28:59 EDT : Command 1 success, errcode 0
+Mon 28 May 2018 16:28:59 EDT : Command 2 running
+Mon 28 May 2018 16:28:59 EDT : Command 2 success, errcode 1

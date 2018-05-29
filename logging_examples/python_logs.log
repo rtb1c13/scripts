@@ -1,0 +1,54 @@
+2018-05-28 19:23:55,888 - INFO - Now doing some multiplication
+2018-05-28 19:23:55,888 - DEBUG - Input arguments to multiply, step 1 were: 47 66 28
+2018-05-28 19:23:55,888 - INFO - The answer for step 1 was 86856
+2018-05-28 19:23:55,888 - DEBUG - Input arguments to multiply, step 2 were: 2 89 34
+2018-05-28 19:23:55,888 - INFO - The answer for step 2 was 6052
+2018-05-28 19:23:55,889 - DEBUG - Input arguments to multiply, step 3 were: 23 51 80
+2018-05-28 19:23:55,889 - INFO - The answer for step 3 was 93840
+2018-05-28 19:23:55,889 - DEBUG - Input arguments to multiply, step 4 were: 84 2 26
+2018-05-28 19:23:55,889 - INFO - The answer for step 4 was 4368
+2018-05-28 19:23:55,889 - DEBUG - Input arguments to multiply, step 5 were: 66 73 54
+2018-05-28 19:23:55,889 - INFO - The answer for step 5 was 260172
+2018-05-28 19:23:55,889 - DEBUG - Input arguments to multiply, step 6 were: 33 71 88
+2018-05-28 19:23:55,889 - INFO - The answer for step 6 was 206184
+2018-05-28 19:23:55,889 - DEBUG - Input arguments to multiply, step 7 were: 70 45 28
+2018-05-28 19:23:55,889 - INFO - The answer for step 7 was 88200
+2018-05-28 19:23:55,889 - DEBUG - Input arguments to multiply, step 8 were: 22 53 58
+2018-05-28 19:23:55,889 - INFO - The answer for step 8 was 67628
+2018-05-28 19:23:55,889 - DEBUG - Input arguments to multiply, step 9 were: 63 79 86
+2018-05-28 19:23:55,889 - INFO - The answer for step 9 was 428022
+2018-05-28 19:23:55,889 - DEBUG - Input arguments to multiply, step 10 were: 99 69 29
+2018-05-28 19:23:55,890 - INFO - The answer for step 10 was 198099
+2018-05-28 19:23:55,890 - INFO - Done!
+2018-05-28 19:23:55,890 - ERROR - An exception was raised:
+Traceback (most recent call last):
+  File "./python_logger.py", line 36, in <module>
+    x, y, z = random.sample(xrange(100), 4)
+ValueError: too many values to unpack
+2018-05-28 19:24:56,132 - INFO - Now doing some multiplication
+2018-05-28 19:24:56,132 - DEBUG - Input arguments to multiply, step 1 were: 42 53 77
+2018-05-28 19:24:56,132 - INFO - The answer for step 1 was 171402
+2018-05-28 19:24:56,132 - DEBUG - Input arguments to multiply, step 2 were: 16 76 46
+2018-05-28 19:24:56,133 - INFO - The answer for step 2 was 55936
+2018-05-28 19:24:56,133 - DEBUG - Input arguments to multiply, step 3 were: 60 75 91
+2018-05-28 19:24:56,133 - INFO - The answer for step 3 was 409500
+2018-05-28 19:24:56,133 - DEBUG - Input arguments to multiply, step 4 were: 14 73 61
+2018-05-28 19:24:56,133 - INFO - The answer for step 4 was 62342
+2018-05-28 19:24:56,133 - DEBUG - Input arguments to multiply, step 5 were: 97 30 91
+2018-05-28 19:24:56,133 - INFO - The answer for step 5 was 264810
+2018-05-28 19:24:56,133 - DEBUG - Input arguments to multiply, step 6 were: 43 94 75
+2018-05-28 19:24:56,133 - INFO - The answer for step 6 was 303150
+2018-05-28 19:24:56,133 - DEBUG - Input arguments to multiply, step 7 were: 57 29 62
+2018-05-28 19:24:56,133 - INFO - The answer for step 7 was 102486
+2018-05-28 19:24:56,133 - DEBUG - Input arguments to multiply, step 8 were: 24 65 60
+2018-05-28 19:24:56,133 - INFO - The answer for step 8 was 93600
+2018-05-28 19:24:56,133 - DEBUG - Input arguments to multiply, step 9 were: 81 6 66
+2018-05-28 19:24:56,133 - INFO - The answer for step 9 was 32076
+2018-05-28 19:24:56,134 - DEBUG - Input arguments to multiply, step 10 were: 0 75 37
+2018-05-28 19:24:56,134 - INFO - The answer for step 10 was 0
+2018-05-28 19:24:56,134 - INFO - Done!
+2018-05-28 19:24:56,134 - ERROR - An exception was raised:
+Traceback (most recent call last):
+  File "./python_logger.py", line 36, in <module>
+    x, y, z = random.sample(xrange(100), 4)
+ValueError: too many values to unpack

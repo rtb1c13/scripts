@@ -1,0 +1,12 @@
+./bash_getopts.x -a
+-a flag was triggered!
+./bash_getopts.x -a -b 100
+-a flag was triggered!
+-b variable is 100
+./bash_getopts.x -b 100
+-b variable is 100
+./bash_getopts.x -b
+Option -b expects an argument
+./bash_getopts.x -x
+Unknown option -x
+./bash_getopts.x -h

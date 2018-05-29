@@ -1,0 +1,2 @@
+Mon 28 May 2018 16:28:54 EDT : Command line = ./bash_logger.x 
+Mon 28 May 2018 16:28:54 EDT : Script starting

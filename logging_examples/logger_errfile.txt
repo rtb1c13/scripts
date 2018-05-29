@@ -1,0 +1,1 @@
+./bash_logger.x: line 20: nosuchfile.txt: No such file or directory

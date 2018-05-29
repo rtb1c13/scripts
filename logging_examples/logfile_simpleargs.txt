@@ -1,0 +1,6 @@
+Argument 1 is simpleconfig.in
+Argument 2 is 100
+First variable in file simpleconfig.in is Hello
+Second variable in file simpleconfig.in is World
+Now reading line foofromfile="Hello" from file simpleconfig.in
+Now reading line barfromfile="World" from file simpleconfig.in
