@@ -4,6 +4,8 @@
 
 import numpy as np
 import scipy.stats as stats
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import argparse
@@ -33,7 +35,7 @@ def histogram(values):
    plt.plot(x,dens(x),color='black',lw=3)
    plt.xlabel(r"Field strength / MV cm$^{-1}$")
    plt.ylabel("Normalised density")
-   plt.show()
+   plt.savefig("Fields.png")
 
 def desc_stats(values,desc):
    """Writes out some descriptive statistics of the values

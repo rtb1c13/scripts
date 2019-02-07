@@ -31,7 +31,10 @@
 #
 #    Usage: Difference_plots.py -h [for help]
 
- 
+###Only for use without display:
+import matplotlib as mpl
+mpl.use('Agg')
+###
 import MDAnalysis.analysis.distances as distanal
 
 from MDAnalysis import Universe

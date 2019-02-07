@@ -5,8 +5,8 @@
 # electric field at a desired site
 # Requirements: AmberTools15 python APIs for sander & parmed, numpy
 
-# ***NB*** currently set up for gas phase complex (pmeflag=False)
-# Change this if you want to run e.g. arotein in PBC as the complex
+# ***NB*** currently set up for PME complex (pmeflag=True)
+# Change this if you want to run e.g. gas phase complex for comparison to QM
 
 
 #Usage: xxxxxxxxxxxxx
@@ -138,7 +138,7 @@ class Anal_traj:
          self.unitvec[i] = self.vec[i] / self.leng[i]
 
 
-   def sanderforce(self,parmstr,atmlst,boxflag=False,pmeflag=False):
+   def sanderforce(self,parmstr,atmlst,boxflag=True,pmeflag=True):
       """Calculates energy and forces for a provided
          Amber parm string and set of coordinates using the Sander
          API. Also takes box dimensions and a flag for use of PME.
@@ -273,8 +273,8 @@ def main():
    atoms = [Atom(i) for i in args.atoms]
    [i.charge(parameters) for i in atoms]
    # Work out original forces
-   orig_trajectory.sanderforce(args.parm,atoms,boxflag=False,pmeflag=False)
-   new_trajectory.sanderforce("discharged.parm7",atoms,boxflag=False,pmeflag=False)
+   orig_trajectory.sanderforce(args.parm,atoms,boxflag=True,pmeflag=True)
+   new_trajectory.sanderforce("discharged.parm7",atoms,boxflag=True,pmeflag=True)
    debug_energies("Energies.txt",orig_trajectory)
    elefrc = subtract_frcs(orig_trajectory.forces,new_trajectory.forces)
    # Fields and projection

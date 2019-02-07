@@ -6,6 +6,10 @@
 # averaged over finite time interval, t"
 
 import numpy as np
+### For remote running/figure generation without xwindow
+import matplotlib as mpl
+mpl.use('Agg')
+###
 import matplotlib.pyplot as plt
 import scipy.integrate as igt
 import mdtraj as md
@@ -20,6 +24,7 @@ def parse():
    parser.add_argument("-t","--traj",help="Coordinate file (Tinker uindxyz, renumbered correctly)",type=str,required=True)
    parser.add_argument("-dt","--diptraj",help="Dipoles file (Tinker uind, numbering unimportant)",type=str)
    parser.add_argument("-g","--gas",help="Flag to calculate gas phase dipoles for environment field calculation. By default this is switched off",dest='gas',action='store_true')
+   parser.add_argument("-pre","--prefix",help="Prefix for output filenames. Default 'KSI'", type=str, default='KSI')
    parser.set_defaults(gas=False)
 
    if len(sys.argv)==1:
@@ -184,7 +189,7 @@ if args.gas:
    uind.field1 -= gasfield[0]
    uind.field2 -= gasfield[1]
 data = calcfield(uindxyz,uind)
-np.savetxt("25ns_fields.txt",data,fmt="%8.3f")
+np.savetxt("%s_fields.txt" % args.prefix,data,fmt="%8.3f")
 
 
 # Read in induced dipoles & ligand coordinates
@@ -193,12 +198,16 @@ np.savetxt("25ns_fields.txt",data,fmt="%8.3f")
 
 # Convert to wavenumbers using quadratic function of Fried et al
 # from supp text S2, fig S4F
-freqs = (-0.00125*data**2) + (0.610*data) + 1688.2
+#freqs = (-0.00125*data**2) + (0.610*data) + 1688.2
 # SOLVENTS: Convert to wavenumbers using linear (R2 = 0.98) function of Fried & Wang
 # from Fig 1a, JPCB 2013
 #freqs = (0.484*data) + 1703.6
+# OR: Convert to wavenumbers using linear (R2 = 0.96) function fitted to my field data for Acetophenone
+#freqs = (0.4686*data) + 1701.1
+# AMOEBA: Convert to wavenumbers using quadratic function fitted to AMOEBA 19-NT solvent fields
+freqs = (-0.00131567*data**2) + 0.5496*data + 1699.2
 #freqs = data
-np.savetxt("25ns_wavenums.txt",freqs,fmt="%10.6f")
+np.savetxt("%s_wavenums.txt" % args.prefix,freqs,fmt="%10.6f")
 freqs = freqs*2.99792458e10 # Convert to Hz
 
 
@@ -245,7 +254,7 @@ for step in range(1,len(devs)+1):
       integrals = integrals/(step-1)
       break
 
-np.savetxt("integrals_25ns.txt",zip(integrals.real,integrals.imag))
+np.savetxt("integrals_%s.txt" % args.prefix,zip(integrals.real,integrals.imag))
 
 # Do fft with 16*padding
 fftout = np.fft.fft(integrals,n=(2**4)*t_len)
@@ -261,11 +270,11 @@ plt.plot(reorderedfrq,reordered.real)
 #plt.plot(reorderedfrq,abs(reordered))
 plt.xlim((avgfrq_wn-100,avgfrq_wn+100))
 plt.xlabel('Wavenumber (cm-1)')
-plt.title("IR lineshape test - KSI fields, 2fs spacing, Run_1 25ns-26ns")
+plt.title("19-NT in KSI fields, %s" % args.prefix)
 plt.ylabel('Intensity (arbitrary units)')
-plt.savefig('25ns_lineshape.png')
-np.savetxt('25ns_lineshape.dat',zip(reorderedfrq,reordered.real))
-#np.savetxt('25ns_lineshape_abs.dat',zip(reorderedfrq,abs(reordered)))
+plt.savefig('%s_lineshape.png' % args.prefix, dpi=300)
+np.savetxt('%s_lineshape.dat' % args.prefix,zip(reorderedfrq,reordered.real))
+#np.savetxt('10ns_lineshape_abs.dat',zip(reorderedfrq,abs(reordered)))
 
 
       
