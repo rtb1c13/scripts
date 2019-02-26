@@ -220,6 +220,7 @@ k = np.arange(n)
 T = n/Fs # Time length of fft signal in s
 frq = k/T # Set of frequencies
 frq = frq/2.99792458e10 # Frq -> Wavenumbers
+times = np.arange(1.,t_len+1)*dt # Timepoints of input data
 
 # Calculate time averages & deviations
 avgfrq_wn = np.mean(freqs)/2.99792458e10
@@ -256,8 +257,10 @@ for step in range(1,len(devs)+1):
 
 np.savetxt("integrals_%s.txt" % args.prefix,zip(integrals.real,integrals.imag))
 
-# Do fft with 16*padding
-fftout = np.fft.fft(integrals,n=(2**4)*t_len)
+# Do fft with 16*padding and apodization using exponential function 
+# (same form as lifetime broadening but with short lifetime)
+tau = 0.5
+fftout = np.fft.fft(integrals * np.exp(-(times*1.e12) / 2.*tau), n=(2**4)*t_len)
 n = len(fftout)
 # Reorder intensities & frequencies
 negfft = fftout[n//2:]
