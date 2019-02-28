@@ -9,6 +9,10 @@
 
 from __future__ import print_function
 
+### For remote running/figure generation without xwindow
+import matplotlib as mpl
+mpl.use('Agg')
+###
 from lmcurvefit import *
 from smooth import *
 import numpy as np
@@ -54,7 +58,7 @@ def read_files(files):
     return aveints, avefreqs
 
 # Do FFT
-def calc_fft(integrals, offset=0, dt=2e-15, t_len=2**12):
+def calc_fft(integrals, offset=0, dt=2e-15, t_len=2**12, tau=0.5):
     # offset = offset of frequencies in wavenumbers, dt = timestep, t_len = length of fft sample
     # FFT parameters
     Fs = 1./dt # Sampling rate s-1
@@ -63,9 +67,10 @@ def calc_fft(integrals, offset=0, dt=2e-15, t_len=2**12):
     T = fftn/Fs # Time length of fft signal in s
     frq = idxs/T # Set of frequencies
     frq = frq/2.99792458e10 # Frq -> Wavenumbers
+    times = np.arange(1.,t_len+1)*dt # Timepoints of input data
 
-    # Do fft with 16*padding
-    fftout = np.fft.fft(integrals,n=fftn)
+    # Do fft with 16*padding and apodization
+    fftout = np.fft.fft(integrals * np.exp(-(times*1.e12) / 2.*tau),n=fftn)
     negfft = fftout[fftn//2:] # First half are at -ve frequencies
     posfft = fftout[:fftn//2]
     negfrq = -1*frq[1:fftn//2+1] # Same as arange(-len(fftout)/2,len(fftout)/2)
@@ -184,7 +189,7 @@ if __name__ == "__main__":
     global inp_args
     inp_args = parse()
     integrals, freqs = read_files(inp_args.inputs)
-    xs, ys = calc_fft(integrals, offset=np.mean(freqs))
+    xs, ys = calc_fft(integrals, offset=np.mean(freqs), tau=0.5)
     tot_data = np.vstack((xs,ys))
     np.savetxt("combined_lineshape.txt", zip(xs,ys))
     if inp_args.smflag:
