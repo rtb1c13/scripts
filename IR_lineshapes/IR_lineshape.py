@@ -25,6 +25,8 @@ def parse():
    parser.add_argument("-dt","--diptraj",help="Dipoles file (Tinker uind, numbering unimportant)",type=str)
    parser.add_argument("-g","--gas",help="Flag to calculate gas phase dipoles for environment field calculation. By default this is switched off",dest='gas',action='store_true')
    parser.add_argument("-pre","--prefix",help="Prefix for output filenames. Default 'KSI'", type=str, default='KSI')
+   parser.add_argument("-s","--stride",help="Stride interval for trajectory frames, default = every frame", type=int, default=0)
+   parser.add_argument("-il","--integral",help="Length of integral, as a power of 2. 2**n frames will be used for the integral.  Default=12, i.e. 2**12 = 4096 frames", type=int, default=12)
    parser.set_defaults(gas=False)
 
    if len(sys.argv)==1:
@@ -171,10 +173,16 @@ def integral_maker(freqdevs):
 global args
 args = parse()
 
+if args.stride == 0:
+    stride = 1
+else:
+    stride = args.stride
+nframes = 2**args.integral
 coordsname = args.traj
 dipname = args.diptraj
 uindxyz = Anal_traj(coordsname)
 uind = Anal_traj(dipname)
+
 atmlst=[]
 for i in args.atoms:
    j = Atom(i)
@@ -202,18 +210,18 @@ np.savetxt("%s_fields.txt" % args.prefix,data,fmt="%8.3f")
 # SOLVENTS: Convert to wavenumbers using linear (R2 = 0.98) function of Fried & Wang
 # from Fig 1a, JPCB 2013
 #freqs = (0.484*data) + 1703.6
-# OR: Convert to wavenumbers using linear (R2 = 0.96) function fitted to my field data for Acetophenone
-#freqs = (0.4686*data) + 1701.1
+# OR: Convert to wavenumbers using linear (R2 = 0.95) function fitted to my field data for 19-NT
+#freqs = (0.6143*data) + 1698.5
 # AMOEBA: Convert to wavenumbers using quadratic function fitted to AMOEBA 19-NT solvent fields
 freqs = (-0.00131567*data**2) + 0.5496*data + 1699.2
 #freqs = data
 np.savetxt("%s_wavenums.txt" % args.prefix,freqs,fmt="%10.6f")
 freqs = freqs*2.99792458e10 # Convert to Hz
 
-
+freqs = freqs[stride-1::stride]
 # Times -> Frequencies
-dt = 2e-15 # Timestep
-t_len = 2**12 # 4096 steps, 8.192 ps
+dt = 2e-15 * stride # Timestep
+t_len = nframes # default = 4096 steps, 8.192 ps
 Fs = 1./dt # Sampling rate s-1
 n = t_len*(2**4) # Samples in FFT signal inc. padding
 k = np.arange(n)
@@ -221,6 +229,10 @@ T = n/Fs # Time length of fft signal in s
 frq = k/T # Set of frequencies
 frq = frq/2.99792458e10 # Frq -> Wavenumbers
 times = np.arange(1.,t_len+1)*dt # Timepoints of input data
+
+with open("%s_parameters.txt" % args.prefix, 'w'):
+    f.write("Timestep: %4.1e fs \n" % dt)
+    f.write("Integral length: %d steps \n" % t_len)
 
 # Calculate time averages & deviations
 avgfrq_wn = np.mean(freqs)/2.99792458e10
