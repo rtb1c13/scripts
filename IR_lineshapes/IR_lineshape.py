@@ -230,7 +230,7 @@ frq = k/T # Set of frequencies
 frq = frq/2.99792458e10 # Frq -> Wavenumbers
 times = np.arange(1.,t_len+1)*dt # Timepoints of input data
 
-with open("%s_parameters.txt" % args.prefix, 'w'):
+with open("%s_parameters.txt" % args.prefix, 'w') as f:
     f.write("Timestep: %4.1e fs \n" % dt)
     f.write("Integral length: %d steps \n" % t_len)
 
