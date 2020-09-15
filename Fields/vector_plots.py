@@ -7,6 +7,10 @@
 
 # Requirements: numpy, matplotlib v2.0.0b1 or later
 
+### Define defaults for matplotlib plots
+plt.style.use("../../../styles+swatches/cbf_8color_cycler_paper_3.33in.mplstyle")
+###
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -69,7 +73,7 @@ def plot_quiver(fields):
    plt.show()
 
 def plot_scatter(fields,crosses):
-   """TBC"""
+   """Scatter plot of field vectors and projection vectord"""
    fig = plt.figure()
    ax = fig.add_subplot(111,projection='3d')
    normfields = fields/np.reshape(np.linalg.norm(fields,axis=1),(len(fields),1))
@@ -90,11 +94,11 @@ def plot_scatter(fields,crosses):
    ax.set_zlim((-1,1))
    cbar = fig.colorbar(tri)
    cbar.set_label("Total field strength / MV cm$^{-1}$",fontsize=16)
-   plt.legend((x_ax,dots,tri),['xyz axes','Pro ring normal','Field'])
-   plt.title('Field distribution about proline N',fontsize=20)
+   plt.legend((x_ax,dots,tri),['xyz axes','Pro ring normal','Field'], frameon=False)
+   plt.title('Field distribution about alanine C',fontsize=20)
    for ang in xrange(0,360,10):
       ax.view_init(azim=ang)
-      plt.savefig("Pro_N_"+str(ang)+".png")
+      plt.savefig("Ala_C_"+str(ang)+".png")
 
 def write_avgs(farray,fn="mean_field.txt",ax=0):
    """Writes out mean of array (default across axis 0) to text file"""
